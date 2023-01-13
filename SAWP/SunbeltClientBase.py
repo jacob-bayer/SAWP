@@ -66,15 +66,19 @@ class SunbeltClientBase():
                           data=json.dumps(data), 
                           headers=headers)
 
-        
 
         if response.ok:
             response = response.json()
             data = response['data'][kind]
             success = data.get('success')
             if success:
-                for item in data[kind]:
-                    yield item
+                if isinstance(data[kind], dict):
+                    yield data[kind]
+                elif isinstance(data[kind], list):
+                    for item in data[kind]:
+                        yield item
+                else:
+                    raise Exception('Unknown type. Expected dict or list.')
             else:
                 return {'errors' : data['errors'],
                         'query' : query}
