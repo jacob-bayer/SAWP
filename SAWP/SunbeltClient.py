@@ -21,5 +21,8 @@ class SunbeltClient(SunbeltClientBase):
     def subreddits(self):
         return generators.SubredditGenerator(self.host)
 
+    @property
+    def post_details(self):
+        return generators.PostDetailGenerator(self.host)
 
         

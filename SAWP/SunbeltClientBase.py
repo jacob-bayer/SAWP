@@ -27,13 +27,18 @@ class SunbeltClientBase():
         if 'zen_unique_id' not in args:
             args = [x for x in args] + ['zen_unique_id']
             
-        if 'ById' in kwargs:
+        if kwargs.get('detail') and 'zen_version_id' not in args:
+            args = [x for x in args] + ['zen_version_id','zen_detail_id']
+            del kwargs['detail']
+
+        if 'byId' in kwargs:
             if kind.endswith('s'):
                 kind = kind[:-1]
             
+
         #variables_dict = {'$' + key: value for key, value in kwargs.items()}
-        variables_str = ', '.join(f'{key}: "{value}"' for key, value in kwargs.items())
-        
+        variables_str = ', '.join(f'{key}: "{value}"' if isinstance(value, str) else f'{key}: {str(value)}' for key, value in kwargs.items())
+        variables_str = variables_str.replace("'", '')
     # =============================================================================
     #         declare_args = {'$updated_before': 'String!',
     #                      '$updated_after': 'String!',
@@ -65,7 +70,6 @@ class SunbeltClientBase():
         response = requests.post(self.host, 
                           data=json.dumps(data), 
                           headers=headers)
-
 
         if response.ok:
             response = response.json()
