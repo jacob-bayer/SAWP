@@ -10,7 +10,56 @@ class SunbeltClientBase():
     def _wrap_in_brackets(self, string):
         return '{' + string + '}'
     
-    def search(self, kind, *args, **kwargs):
+    def mutation(self, mutation_type, from_json):
+        """
+        Create a new object in the database.
+
+        Parameters
+        ----------
+        kind : str
+            The kind of object to create. Can be 'post', 'comment', 'subreddit', or 'account'.
+        from_json : dict
+            The data to create the object with.
+
+        Returns
+        -------
+        dict
+            The data of the created object.
+        """
+
+        mutation_title = f' mutation new{mutation_type} '
+        mutation_args = f' {mutation_type}(from_json: """{from_json}""") '
+        mutation_return_fields = self._wrap_in_brackets(' success errors ')
+        
+        mutation = mutation_title + self._wrap_in_brackets(mutation_args + mutation_return_fields)
+        
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        host = self.host
+
+        data = json.dumps({'query': mutation})
+
+        response = requests.post(host, data=data, headers = headers)
+
+        if response.ok:
+            response = response.json()
+            data = response['data']
+            success = data.get('success')
+            if success:
+                return data[mutation_type]
+            else:
+                debugger_mutation = mutation_title + f' {mutation_type}(from_json: """json""") ' + mutation_return_fields
+                return {'errors' : response,
+                        'query' : debugger_mutation}
+        else:
+            print(mutation)
+            return response.json()
+
+       
+
+    def query(self, kind, *args, **kwargs):
         """
         Search for a kind of object in the database.
 

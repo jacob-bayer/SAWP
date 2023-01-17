@@ -16,7 +16,7 @@ class SunbeltModelBase(SunbeltClientBase):
         self._update_self_attrs(data)
 
     def _add_fields(self, *args):
-        data = next(self.search(self.kind, byId = self.zen_unique_id, *args))
+        data = next(self.query(self.kind, byId = self.zen_unique_id, *args))
         self._update_self_attrs(data)
 
     def __getattr__(self, name):
@@ -82,7 +82,7 @@ class Post(SunbeltModelBase):
 
     @property
     def author(self):
-        return Account(next(self.search('account', byId = self.zen_account_id)), self.host)
+        return Account(next(self.query('account', byId = self.zen_account_id)), self.host)
 
     @property
     def versions(self):
