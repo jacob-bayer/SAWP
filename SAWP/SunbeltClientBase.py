@@ -45,7 +45,7 @@ class SunbeltClientBase():
 
         if response.ok:
             response = response.json()
-            data = response['data']
+            data = response['data'][mutation_type]
             success = data.get('success')
             if success:
                 return data[mutation_type]
@@ -119,22 +119,26 @@ class SunbeltClientBase():
         response = requests.post(self.host, 
                           data=json.dumps(data), 
                           headers=headers)
-
+        
+        response_json = response.json()
         if response.ok:
-            response = response.json()
-            data = response['data'][kind]
-            success = data.get('success')
-            if success:
-                if isinstance(data[kind], dict):
-                    yield data[kind]
-                elif isinstance(data[kind], list):
-                    for item in data[kind]:
-                        yield item
-                else:
-                    raise Exception('Unknown type. Expected dict or list.')
+            data = response_json['data']
+            if data:
+                data = data[kind]
+                success = data.get('success')
+                if success:
+                    if isinstance(data[kind], dict):
+                        yield data[kind]
+                    elif isinstance(data[kind], list):
+                        for item in data[kind]:
+                            yield item
+                    else:
+                        raise Exception('Unknown type. Expected dict or list.')
             else:
-                return {'errors' : data['errors'],
-                        'query' : query}
+                error_msg = '\n\n'.join(x['message'] for x in response_json['errors'])
+                print(query)
+                return 'GraphQL Msg: ' + error_msg
         else:
+            error_msg = '\n\n'.join(x['message'] for x in response_json['errors'])
             print(query)
-            return response.json()
+            return 'GraphQL Msg:' + error_msg

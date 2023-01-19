@@ -25,7 +25,4 @@ class SunbeltClient(SunbeltClientBase):
     def post_details(self):
         return generators.PostDetailGenerator(self.host)
 
-    def create_post(self, from_json = None):
-        return self.posts.create(from_json)
-    
         

@@ -16,19 +16,29 @@ class SunbeltModelBase(SunbeltClientBase):
         self._update_self_attrs(data)
 
     def _add_fields(self, *args):
-        data = next(self.query(self.kind, byId = self.zen_unique_id, *args))
-        self._update_self_attrs(data)
+        query = self.query(self.kind, byId = self.zen_unique_id, *args)
+        try:
+            data = next(query)
+            self._update_self_attrs(data)
+        except StopIteration as msg:
+            raise AttributeError(msg)
+        
 
     def __getattr__(self, name):
 
         # https://stackoverflow.com/a/61413243/11477615
         if name.startswith('_') or name in ['shape','size']:
             raise AttributeError
+            
+        # This is a mess and should be changed
         try:
             return getattr(super().__getattribute__(name), name)
         except AttributeError:
-            self._add_fields(name)
-            return super().__getattribute__(name)
+            try:
+                self._add_fields(name)
+                return super().__getattribute__(name)
+            except AttributeError as msg:
+                raise AttributeError(msg)
 
 
 

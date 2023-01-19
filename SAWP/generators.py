@@ -17,6 +17,7 @@ class SunbeltReadGeneratorBase(SunbeltClientBase):
             data = next(self.query(self.kind, byId = 1, **kwargs))
         except:
             data = next(self.query(self.kinds, orderBy = {'zen_unique_id': 'asc'}, **kwargs))
+        breakpoint()
         return self.model(data, self.host)
 
     def _last(self, *args, **kwargs):
@@ -28,6 +29,7 @@ class SunbeltReadGeneratorBase(SunbeltClientBase):
              del kwargs['zen_unique_id']
 
         data = next(self.query(self.kinds, orderBy = {'zen_unique_id': 'desc'}))
+        
         return self.model(data, self.host)
 
     def _all(self, *args, **kwargs):
@@ -39,6 +41,7 @@ class SunbeltReadGeneratorBase(SunbeltClientBase):
 
     def get(self, zen_id, *args):
         data = next(self.query(self.kind, byId = zen_id, *args))
+
         return self.model(data, self.host)
 
 class SunbeltWriteGeneratorBase(SunbeltClientBase):
