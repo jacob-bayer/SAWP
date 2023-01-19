@@ -45,17 +45,19 @@ class SunbeltClientBase():
 
         if response.ok:
             response = response.json()
-            data = response['data'][mutation_type]
-            success = data.get('success')
-            if success:
-                return data[mutation_type]
+            errors = response.get('errors')
+            if not errors:
+                return response['data'][mutation_type]
             else:
                 debugger_mutation = mutation_title + f' {mutation_type}(from_json: """json""") ' + mutation_return_fields
-                return {'errors' : response,
+                error_msg = '\n\n'.join(x['message'] for x in response['errors'])
+                return {'errors' : error_msg,
                         'query' : debugger_mutation}
         else:
-            print(mutation)
-            return response.json()
+            debugger_mutation = mutation_title + f' {mutation_type}(from_json: """json""") ' + mutation_return_fields
+            error_msg = '\n\n'.join(x['message'] for x in response.json()['errors'])
+            return {'errors' : error_msg,
+                    'query' : debugger_mutation}
 
        
 
@@ -80,9 +82,17 @@ class SunbeltClientBase():
             args = [x for x in args] + ['zen_version_id','zen_detail_id']
             del kwargs['detail']
 
-        if 'byId' in kwargs:
-            if kind.endswith('s'):
-                kind = kind[:-1]
+        # converts the kind to singular if it is not already
+        # if only a single id is being passed
+        id_params = ['byId', 'reddit_id']
+        for term in id_params:
+            term_present = term in kwargs
+            if term_present:
+                not_a_list = not isinstance(kwargs[term], list)
+                if not_a_list and kind.endswith('s'):
+                    kind = kind[:-1]
+
+                
             
 
         #variables_dict = {'$' + key: value for key, value in kwargs.items()}

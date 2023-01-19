@@ -3,7 +3,11 @@
 from SAWP.SunbeltClientBase import SunbeltClientBase
 from SAWP.models import Comment, Account, Subreddit, Post, PostDetail
 
-class SunbeltReadGeneratorBase(SunbeltClientBase):
+class SunbeltReadGeneratorBase():
+    
+    def __init__(self):
+        self.client = SunbeltClientBase(self.host)
+
     
     def _first(self, *args, **kwargs):
         """
@@ -14,10 +18,10 @@ class SunbeltReadGeneratorBase(SunbeltClientBase):
             del kwargs['zen_unique_id']
 
         try:
-            data = next(self.query(self.kind, byId = 1, **kwargs))
+            data = next(self.client.query(self.kind, byId = 1, **kwargs))
         except:
-            data = next(self.query(self.kinds, orderBy = {'zen_unique_id': 'asc'}, **kwargs))
-        breakpoint()
+            data = next(self.client.query(self.kinds, orderBy = {'zen_unique_id': 'asc'}, **kwargs))
+
         return self.model(data, self.host)
 
     def _last(self, *args, **kwargs):
@@ -28,7 +32,7 @@ class SunbeltReadGeneratorBase(SunbeltClientBase):
         if 'zen_unique_id' in kwargs and kwargs['zen_unique_id'] is None:
              del kwargs['zen_unique_id']
 
-        data = next(self.query(self.kinds, orderBy = {'zen_unique_id': 'desc'}))
+        data = next(self.client.query(self.kinds, orderBy = {'zen_unique_id': 'desc'}))
         
         return self.model(data, self.host)
 
@@ -36,15 +40,14 @@ class SunbeltReadGeneratorBase(SunbeltClientBase):
         if 'zen_unique_id' in kwargs and kwargs['zen_unique_id'] is None:
              del kwargs['zen_unique_id']
 
-        for data in self.query(self.kinds, *args, **kwargs):
+        for data in self.client.query(self.kinds, *args, **kwargs):
             yield self.model(data, self.host)
 
-    def get(self, zen_id, *args):
-        data = next(self.query(self.kind, byId = zen_id, *args))
-
+    def search(self, *args, **kwargs):
+        data = next(self.client.query(self.kind, *args, **kwargs))
         return self.model(data, self.host)
 
-class SunbeltWriteGeneratorBase(SunbeltClientBase):
+class SunbeltWriteGeneratorBase():
     
     def create(self, from_json ):
         mutation_type = 'create' + self.kind.title()
@@ -68,6 +71,7 @@ class CommentGenerator(MainObjectGenerator):
         self.kind = 'comment'
         self.kinds = 'comments'
         self.model = Comment
+        super().__init__(*args, **kwargs)
 
 
 class AccountGenerator(MainObjectGenerator):
@@ -76,6 +80,8 @@ class AccountGenerator(MainObjectGenerator):
         self.kind = 'account'
         self.kinds = 'accounts'
         self.model = Account
+        super().__init__(*args, **kwargs)
+
 
 class SubredditGenerator(MainObjectGenerator):
     def __init__(self, host, *args, **kwargs):
@@ -83,6 +89,8 @@ class SubredditGenerator(MainObjectGenerator):
         self.kind = 'subreddit'
         self.kinds = 'subreddits'
         self.model = Subreddit
+        super().__init__(*args, **kwargs)
+
     
 class PostGenerator(MainObjectGenerator):
     def __init__(self, host, *args, **kwargs):
@@ -90,6 +98,8 @@ class PostGenerator(MainObjectGenerator):
         self.kind = 'post'
         self.kinds = 'posts'
         self.model = Post
+        super().__init__(*args, **kwargs)
+
 
 class PostDetailGenerator(SunbeltReadGeneratorBase):
     def __init__(self, host, *args, **kwargs):
@@ -97,6 +107,8 @@ class PostDetailGenerator(SunbeltReadGeneratorBase):
         self.kind = 'postdetail'
         self.kinds = 'postdetails'
         self.model = PostDetail
+        super().__init__(*args, **kwargs)
+
 
         self.zen_post_id = kwargs.get('zen_post_id')
 
