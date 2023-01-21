@@ -43,15 +43,21 @@ class SunbeltReadGeneratorBase():
         for data in self.client.query(self.kinds, *args, **kwargs):
             yield self.model(data, self.host)
 
-    def search(self, *args, **kwargs):
-        data = next(self.client.query(self.kind, *args, **kwargs))
+    def search(self, kind = None, *args, **kwargs):
+        if not kind:
+            kind = self.kind
+        query = self.client.query(kind, *args, **kwargs)
+        data = next(query)
         return self.model(data, self.host)
 
 class SunbeltWriteGeneratorBase():
     
+    def __init__(self):
+        self.client = SunbeltClientBase(self.host)
+    
     def create(self, from_json ):
-        mutation_type = 'create' + self.kind.title()
-        self.mutation(mutation_type, from_json)
+        result = self.client.mutation(self.kind, from_json)
+        return result
         
 
 class MainObjectGenerator(SunbeltReadGeneratorBase, SunbeltWriteGeneratorBase):
@@ -63,7 +69,6 @@ class MainObjectGenerator(SunbeltReadGeneratorBase, SunbeltWriteGeneratorBase):
     
     def last(self, *args, **kwargs):
         return self._last(*args, **kwargs)
-
                 
 class CommentGenerator(MainObjectGenerator):
     def __init__(self, host, *args, **kwargs):
@@ -102,15 +107,15 @@ class PostGenerator(MainObjectGenerator):
 
 
 class PostDetailGenerator(SunbeltReadGeneratorBase):
-    def __init__(self, host, *args, **kwargs):
+    def __init__(self, host, zen_post_id = None, *args, **kwargs):
         self.host = host
         self.kind = 'postdetail'
         self.kinds = 'postdetails'
         self.model = PostDetail
         super().__init__(*args, **kwargs)
 
-
-        self.zen_post_id = kwargs.get('zen_post_id')
+        if zen_post_id:
+            self.zen_post_id = zen_post_id
 
     def all(self, *args, **kwargs):
         return self._all(zen_unique_id = self.zen_post_id, detail = True, *args, **kwargs)

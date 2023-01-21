@@ -4,13 +4,14 @@ import requests
 import json
 
 class SunbeltClientBase():
+    
     def __init__(self, host):
         self.host = host
-    
+     
     def _wrap_in_brackets(self, string):
         return '{' + string + '}'
     
-    def mutation(self, mutation_type, from_json):
+    def mutation(self, kind, from_json):
         """
         Create a new object in the database.
 
@@ -27,15 +28,15 @@ class SunbeltClientBase():
             The data of the created object.
         """
 
+        mutation_type = 'create' + kind.title()
         mutation_title = f' mutation new{mutation_type} '
         mutation_args = f' {mutation_type}(from_json: """{from_json}""") '
-        mutation_return_fields = self._wrap_in_brackets(' success errors ')
+        kind_fields = kind + ' { zen_unique_id most_recent_zen_version_id most_recent_zen_detail_id } '
+        mutation_return_fields = self._wrap_in_brackets(f' success errors created_new_version {kind_fields}')
         
         mutation = mutation_title + self._wrap_in_brackets(mutation_args + mutation_return_fields)
         
-        headers = {
-            'Content-Type': 'application/json'
-        }
+        headers = {'Content-Type': 'application/json'}
 
         host = self.host
 
@@ -83,15 +84,17 @@ class SunbeltClientBase():
             del kwargs['detail']
 
         # converts the kind to singular if it is not already
-        # if only a single id is being passed
+        # if only a single id is being passed.
+        # Converts to plural in any other situation
         id_params = ['byId', 'reddit_id']
-        for term in id_params:
-            term_present = term in kwargs
-            if term_present:
-                not_a_list = not isinstance(kwargs[term], list)
-                if not_a_list and kind.endswith('s'):
-                    kind = kind[:-1]
-
+        any_term_present = any(x in kwargs for x in id_params)
+        if any_term_present:
+            any_id_list = any(isinstance(x, list) for x in kwargs.values())
+            if not any_id_list and kind.endswith('s'):
+                kind = kind[:-1]
+        else:
+            if not kind.endswith('s'):
+                kind = kind + 's'
                 
             
 
