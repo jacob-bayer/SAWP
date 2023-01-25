@@ -1,2 +1,8 @@
-# sawp
-Sunbelt API Wrapper (Python)
+# SAWP
+Sunbelt API Wrapper for Python
+
+To install, simply run
+
+```
+pip install sawp
+```
