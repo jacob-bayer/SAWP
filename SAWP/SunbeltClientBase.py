@@ -31,7 +31,7 @@ class SunbeltClientBase():
         mutation_type = 'create' + kind.title()
         mutation_title = f' mutation new{mutation_type} '
         mutation_args = f' {mutation_type}(from_json: """{from_json}""") '
-        kind_fields = kind + ' { zen_unique_id most_recent_zen_version_id most_recent_zen_detail_id } '
+        kind_fields = kind + ' { sun_unique_id most_recent_sun_version_id most_recent_sun_detail_id } '
         mutation_return_fields = self._wrap_in_brackets(f' success errors created_new_version {kind_fields}')
         
         mutation = mutation_title + self._wrap_in_brackets(mutation_args + mutation_return_fields)
@@ -76,11 +76,11 @@ class SunbeltClientBase():
             The fields to filter the search by. Can updated_before, updated_after, posted_before, or posted_after.
         """
 
-        if 'zen_unique_id' not in args:
-            args = [x for x in args] + ['zen_unique_id']
+        if 'sun_unique_id' not in args:
+            args = [x for x in args] + ['sun_unique_id']
             
-        if kwargs.get('detail') and 'zen_version_id' not in args:
-            args = [x for x in args] + ['zen_version_id','zen_detail_id']
+        if kwargs.get('detail') and 'sun_version_id' not in args:
+            args = [x for x in args] + ['sun_version_id','sun_detail_id']
             del kwargs['detail']
 
         # converts the kind to singular if it is not already

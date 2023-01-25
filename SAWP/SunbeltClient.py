@@ -5,14 +5,15 @@ from SAWP.SunbeltClientBase import SunbeltClientBase
 
 class SunbeltClient(SunbeltClientBase):
     
-# =============================================================================
-#     def __init__(self, username, password, env = 'dev'):
-#         super().__init__()
-#         hosts = {'dev': "http://127.0.0.1:5000/graphql",
-#                  'prod' : ''}
-#         self.host = hosts[env]
-#     
-# =============================================================================
+    def __init__(self, env = 'dev'):
+        hosts = {'local': "http://127.0.0.1:5000/graphql",
+                 'dev_gcloud' : 'https://sunbeltapi.uc.r.appspot.com/graphql',
+                 'dev' : 'https://sunbelt.herokuapp.com/graphql',
+                  'prod' : ''}
+        self.host = hosts[env]
+        super().__init__(self.host)
+    
+
     @property
     def posts(self):
         return generators.PostGenerator(self.host)

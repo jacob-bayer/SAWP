@@ -16,7 +16,7 @@ class SunbeltModelBase(SunbeltClientBase):
         self._update_self_attrs(data)
 
     def _add_fields(self, *args):
-        query = self.query(self.kind, byId = self.zen_unique_id, *args)
+        query = self.query(self.kind, byId = self.sun_unique_id, *args)
         try:
             data = next(query)
             self._update_self_attrs(data)
@@ -40,6 +40,11 @@ class SunbeltModelBase(SunbeltClientBase):
             except AttributeError as msg:
                 raise AttributeError(msg)
 
+    def __repr__(self):
+        return f'Sun{self.kind.capitalize()}({self.sun_unique_id})'
+
+    def to_dict(self):
+        return self.__dict__['data']
 
 
 
@@ -51,10 +56,7 @@ class Comment(SunbeltModelBase):
         self.host = host
         self.kind = 'comment'
         self.kinds = 'comments'
-        self.zen_unique_id = data['zen_unique_id']
-
-    def __repr__(self):
-        return f'ZenComment({self.zen_unique_id})'
+        self.sun_unique_id = data['sun_unique_id']
     
 
 class Account(SunbeltModelBase):
@@ -64,10 +66,7 @@ class Account(SunbeltModelBase):
         self.host = host
         self.kind = 'account'
         self.kinds = 'accounts'
-        self.zen_unique_id = data['zen_unique_id']
-
-    def __repr__(self):
-        return f'ZenAccount({self.zen_unique_id})'
+        self.sun_unique_id = data['sun_unique_id']
 
 class Subreddit(SunbeltModelBase):
     
@@ -76,10 +75,7 @@ class Subreddit(SunbeltModelBase):
         self.host = host
         self.kind = 'subreddit'
         self.kinds = 'subreddits'
-        self.zen_unique_id = data['zen_unique_id']
-
-    def __repr__(self):
-        return f'ZenSubreddit({self.zen_unique_id})'
+        self.sun_unique_id = data['sun_unique_id']
     
 class Post(SunbeltModelBase):
 
@@ -88,19 +84,20 @@ class Post(SunbeltModelBase):
         self.host = host
         self.kind = 'post'
         self.kinds = 'posts'
-        self.zen_unique_id = data['zen_unique_id']
+        self.sun_unique_id = data['sun_unique_id']
 
     @property
     def author(self):
-        return Account(next(self.query('account', byId = self.zen_account_id)), self.host)
+        return Account(next(self.query('account', byId = self.sun_account_id)), self.host)
 
     @property
     def versions(self):
-        return generators.PostDetailGenerator(host = self.host, zen_post_id = self.zen_unique_id)
+        return generators.PostDetailGenerator(host = self.host, sun_post_id = self.sun_unique_id)
 
+    @property
+    def comments(self):
+        return generators.CommentGenerator(host = self.host, sun_post_id = self.sun_unique_id)
 
-    def __repr__(self):
-        return f'ZenPost({self.zen_unique_id})'
 
 class PostDetail(SunbeltModelBase):
 
@@ -109,12 +106,12 @@ class PostDetail(SunbeltModelBase):
         self.host = host
         self.kind = 'postdetail'
         self.kinds = 'postdetails'
-        self.zen_post_id = data['zen_unique_id']
-        self.zen_version_id = data['zen_version_id']
-        self.zen_unique_id = data['zen_detail_id']
+        self.sun_post_id = data['sun_unique_id']
+        self.sun_version_id = data['sun_version_id']
+        self.sun_unique_id = data['sun_detail_id']
         
     def __repr__(self):
-        return f'PostVersion(ZenPost = {self.zen_post_id} , ZenVersion = {self.zen_version_id})'
+        return f'PostVersion(SunPost = {self.sun_post_id} , SunVersion = {self.sun_version_id})'
 
 class CommentDetail(SunbeltModelBase):
 
@@ -123,12 +120,12 @@ class CommentDetail(SunbeltModelBase):
         self.host = host
         self.kind = 'commentdetail'
         self.kinds = 'commentdetails'
-        self.zen_comment_id = data['zen_unique_id']
-        self.zen_version_id = data['zen_version_id']
-        self.zen_unique_id = data['zen_detail_id']
+        self.sun_comment_id = data['sun_unique_id']
+        self.sun_version_id = data['sun_version_id']
+        self.sun_unique_id = data['sun_detail_id']
         
     def __repr__(self):
-        return f'CommentVersion(ZenComment = {self.zen_comment_id} , ZenVersion = {self.zen_version_id})'
+        return f'CommentVersion(SunComment = {self.sun_comment_id} , SunVersion = {self.sun_version_id})'
 
 class SubredditDetail(SunbeltModelBase):
 
@@ -137,12 +134,12 @@ class SubredditDetail(SunbeltModelBase):
         self.host = host
         self.kind = 'subredditdetail'
         self.kinds = 'subredditdetails'
-        self.zen_subreddit_id = data['zen_unique_id']
-        self.zen_version_id = data['zen_version_id']
-        self.zen_unique_id = data['zen_detail_id']
+        self.sun_subreddit_id = data['sun_unique_id']
+        self.sun_version_id = data['sun_version_id']
+        self.sun_unique_id = data['sun_detail_id']
         
     def __repr__(self):
-        return f'SubredditVersion(ZenSubreddit = {self.zen_subreddit_id} , ZenVersion = {self.zen_version_id})'
+        return f'SubredditVersion(SunSubreddit = {self.sun_subreddit_id} , SunVersion = {self.sun_version_id})'
 
 class AccountDetail(SunbeltModelBase):
 
@@ -151,10 +148,10 @@ class AccountDetail(SunbeltModelBase):
         self.host = host
         self.kind = 'accountdetail'
         self.kinds = 'accountdetails'
-        self.zen_account_id = data['zen_unique_id']
-        self.zen_version_id = data['zen_version_id']
-        self.zen_unique_id = data['zen_detail_id']
+        self.sun_account_id = data['sun_unique_id']
+        self.sun_version_id = data['sun_version_id']
+        self.sun_unique_id = data['sun_detail_id']
         
     def __repr__(self):
-        return f'AccountVersion(ZenAccount = {self.zen_account_id} , ZenVersion = {self.zen_version_id})'
+        return f'AccountVersion(SunAccount = {self.sun_account_id} , SunVersion = {self.sun_version_id})'
         
