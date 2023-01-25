@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from SAWP.SunbeltClientBase import SunbeltClientBase
-from SAWP.models import Comment, Account, Subreddit, Post, PostDetail
+from sawp.SunbeltClientBase import SunbeltClientBase
+from sawp.models import Comment, Account, Subreddit, Post, PostDetail
 
 class SunbeltReadGeneratorBase():
     

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from SAWP import generators
-from SAWP.SunbeltClientBase import SunbeltClientBase
+from sawp import generators
+from sawp.SunbeltClientBase import SunbeltClientBase
 
 class SunbeltClient(SunbeltClientBase):
     

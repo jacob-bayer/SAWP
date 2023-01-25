@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from SAWP.SunbeltClientBase import SunbeltClientBase
-from SAWP import generators
+from sawp.SunbeltClientBase import SunbeltClientBase
+from sawp import generators
 
 class SunbeltModelBase(SunbeltClientBase):
     def _update_self_attrs(self, data):
