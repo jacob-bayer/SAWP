@@ -58,9 +58,7 @@ class SunbeltReadGeneratorBase():
         
     
     def get(self, by_id):
-        query = self.search(self.kind, 'zen_unique_id', byId = by_id)
-        data = next(query)
-        return self.model(self._sunbelt, data)
+        return self.search(self.kind, 'sun_unique_id', byId = by_id)
 
 class SunbeltWriteGeneratorBase():
     """

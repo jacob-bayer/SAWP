@@ -16,7 +16,7 @@ class SunbeltModelBase():
         self._sunbelt = sunbelt
 
     def _add_fields(self, *args):
-        query = self._sunbelt.query(self.kind, byId = self.sun_unique_id, *args)
+        query = self._sunbelt.query(self.kind, byId = self.uid, *args)
         try:
             data = next(query)
             self._update_self_attrs(data)
@@ -44,7 +44,8 @@ class SunbeltModelBase():
         return f'Sun{self.kind.capitalize()}({self.sun_unique_id})'
 
     def to_dict(self):
-        return self.__dict__['data']
+        fields_to_del = ['data','kinds','_sunbelt','sun_unique_id']
+        return {k:v for k,v in self.__dict__.items() if k not in fields_to_del}
 
 class Account(SunbeltModelBase):
 
@@ -52,7 +53,7 @@ class Account(SunbeltModelBase):
         self.data = data
         self.kind = 'account'
         self.kinds = 'accounts'
-        self.sun_unique_id = data['sun_unique_id']
+        self.uid = data['sun_unique_id']
         super().__init__(sunbelt, data)
 
 class Subreddit(SunbeltModelBase):
@@ -61,7 +62,7 @@ class Subreddit(SunbeltModelBase):
         self.data = data
         self.kind = 'subreddit'
         self.kinds = 'subreddits'
-        self.sun_unique_id = data['sun_unique_id']
+        self.uid = data['sun_unique_id']
         super().__init__(sunbelt, data)
     
 class Post(SunbeltModelBase):
@@ -70,7 +71,7 @@ class Post(SunbeltModelBase):
         self.data = data
         self.kind = 'post'
         self.kinds = 'posts'
-        self.sun_unique_id = data['sun_unique_id']
+        self.uid = data['sun_unique_id']
         super().__init__(sunbelt, data)
 
     @property
@@ -90,7 +91,7 @@ class Comment(SunbeltModelBase):
         self.data = data
         self.kind = 'comment'
         self.kinds = 'comments'
-        self.sun_unique_id = data['sun_unique_id']
+        self.uid = data['sun_unique_id']
         super().__init__(sunbelt, data)
 
     @property
@@ -118,10 +119,12 @@ class PostDetail(SunbeltModelBase):
         self.data = data
         self.kind = 'postdetail'
         self.kinds = 'postdetails'
-        self.sun_post_id = data['sun_unique_id']
-        self.sun_version_id = data['sun_version_id']
-        self.sun_unique_id = data['sun_detail_id']
         super().__init__(sunbelt, data)
+        
+        # This overrides the data that was put in, which is necessary
+        # if you want these to be the final values
+        self.sun_post_id = data['sun_unique_id']
+        self.uid = data['sun_detail_id']
         
     def __repr__(self):
         return f'PostVersion(SunPost = {self.sun_post_id} , SunVersion = {self.sun_version_id})'
@@ -132,10 +135,14 @@ class CommentDetail(SunbeltModelBase):
         self.data = data
         self.kind = 'commentdetail'
         self.kinds = 'commentdetails'
-        self.sun_comment_id = data['sun_unique_id']
-        self.sun_version_id = data['sun_version_id']
-        self.sun_unique_id = data['sun_detail_id']
         super().__init__(sunbelt, data)
+        
+        # This overrides the data that was put in, which is necessary
+        # if you want these to be the final values
+        self.sun_comment_id = data['sun_unique_id']
+        self.uid = data['sun_detail_id']
+
+        
         
     def __repr__(self):
         return f'CommentVersion(SunComment = {self.sun_comment_id} , SunVersion = {self.sun_version_id})'
@@ -146,10 +153,13 @@ class SubredditDetail(SunbeltModelBase):
         self.data = data
         self.kind = 'subredditdetail'
         self.kinds = 'subredditdetails'
-        self.sun_subreddit_id = data['sun_unique_id']
-        self.sun_version_id = data['sun_version_id']
-        self.sun_unique_id = data['sun_detail_id']
         super().__init__(sunbelt, data)
+        
+        # This overrides the data that was put in, which is necessary
+        # if you want these to be the final values
+        self.sun_subreddit_id = data['sun_unique_id']
+        self.uid = data['sun_detail_id']
+        
         
     def __repr__(self):
         return f'SubredditVersion(SunSubreddit = {self.sun_subreddit_id} , SunVersion = {self.sun_version_id})'
@@ -160,10 +170,10 @@ class AccountDetail(SunbeltModelBase):
         self.data = data
         self.kind = 'accountdetail'
         self.kinds = 'accountdetails'
-        self.sun_account_id = data['sun_unique_id']
-        self.sun_version_id = data['sun_version_id']
-        self.sun_unique_id = data['sun_detail_id']
         super().__init__(sunbelt, data)
+        self.sun_account_id = data['sun_unique_id']
+        self.uid = data['sun_detail_id']
+
         
     def __repr__(self):
         return f'AccountVersion(SunAccount = {self.sun_account_id} , SunVersion = {self.sun_version_id})'
