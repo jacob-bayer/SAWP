@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from sawp import generators
-from sawp.SunbeltClientBase import SunbeltClientBase
+from .base import SunbeltClientBase
+from .generators import generators
 
 class SunbeltClient(SunbeltClientBase):
     
@@ -16,22 +16,26 @@ class SunbeltClient(SunbeltClientBase):
 
     @property
     def posts(self):
-        return generators.PostGenerator(self.host)
+        return generators.PostGenerator(self)
     
     @property
     def comments(self):
-        return generators.CommentGenerator(self.host)
+        return generators.CommentGenerator(self)
 
     @property
     def accounts(self):
-        return generators.AccountGenerator(self.host)
+        return generators.AccountGenerator(self)
 
     @property
     def subreddits(self):
-        return generators.SubredditGenerator(self.host)
+        return generators.SubredditGenerator(self)
 
     @property
-    def post_details(self):
-        return generators.PostDetailGenerator(self.host)
+    def post_details(self):#, sun_post_id = None):
+        return generators.PostDetailGenerator(self)#, sun_post_id = sun_post_id)
+
+    @property
+    def comment_details(self):#, sun_comment_id = None):
+        return generators.CommentDetailGenerator(self)#, sun_comment_id = sun_comment_id)
 
         

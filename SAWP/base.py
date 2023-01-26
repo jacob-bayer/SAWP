@@ -121,7 +121,7 @@ class SunbeltClientBase():
         body = self._wrap_in_brackets(body)
         
         query = 'query ' + graphql_query_name + body
-        
+
         data = {
           'query': query,
           #'variables' : variables
@@ -134,7 +134,7 @@ class SunbeltClientBase():
                           headers=headers)
         
         response_json = response.json()
-        if response.ok:
+        if response.ok and not response_json.get('errors'):
             data = response_json['data']
             if data:
                 data = data[kind]
