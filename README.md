@@ -1,3 +1,7 @@
+
+![Sunbelt](/assets/logo-no-background.png)
+
+
 # SAWP: Sunbelt API Wrapper for Python
 Author: Jacob Bayer
 
@@ -77,48 +81,7 @@ post.comments
      SunComment(3),
      SunComment(4),
      SunComment(5),
-     SunComment(6),
-     SunComment(7),
-     SunComment(8),
-     SunComment(9),
-     SunComment(10),
-     SunComment(11),
-     SunComment(12),
-     SunComment(13),
-     SunComment(14),
-     SunComment(15),
-     SunComment(16),
-     SunComment(17),
-     SunComment(18),
-     SunComment(19),
-     SunComment(20),
-     SunComment(21),
-     SunComment(22),
-     SunComment(23),
-     SunComment(24),
-     SunComment(25),
-     SunComment(26),
-     SunComment(27),
-     SunComment(28),
-     SunComment(29),
-     SunComment(30),
-     SunComment(31),
-     SunComment(32),
-     SunComment(33),
-     SunComment(34),
-     SunComment(35),
-     SunComment(36),
-     SunComment(37),
-     SunComment(38),
-     SunComment(40),
-     SunComment(46),
-     SunComment(47),
-     SunComment(39),
-     SunComment(41),
-     SunComment(42),
-     SunComment(43),
-     SunComment(44),
-     SunComment(45),
+     ...
      SunComment(48),
      SunComment(49),
      SunComment(50)]
@@ -497,9 +460,3 @@ comments_df
 <p>660 rows × 15 columns</p>
 </div>
 
-
-
-
-```python
-
-```
