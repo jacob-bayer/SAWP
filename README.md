@@ -8,7 +8,7 @@ Author: Jacob Bayer
 ##### Introduction
 Sunbelt is a database that stores information mined from Reddit. Unlike other services such as Pushshift and Reveddit, which store data on posts and comments immediately after they are posted (Pushshift), or create a new way for users to see live data on Reddit (Reveddit), Sunbelt stores information about how posts, comments, redditors, and subreddits have changed over time. 
 
-**Sunbelt is the only service that does this** *(as far as I know)*, but it is still in a very early stage of development and does not have data at the same scale as Pushshift.
+**Sunbelt is the only service that does this** *(as far as I know)*, but it is still in a very early stage of development and does not have data at the same scale as Pushshift, nor will it any time soon. If you're interested in using Sunbelt for your project and you'd like to have data from a specific subreddit (or subreddits) loaded into the Sunbelt database, please contact me at jacobbenjaminbayer@gmail.com.
 
 To start using Sunbelt, install the [Sunbelt API Wrapper for Python (SAWP)](https://pypi.org/project/sawp/) by running 
 
