@@ -5,11 +5,11 @@ from .generators import generators
 
 class SunbeltClient(SunbeltClientBase):
     
-    def __init__(self, server = 'heroku'):
+    def __init__(self, server = 'local'):
         servers = {'local': "http://127.0.0.1:5000/graphql",
                  'heroku' : 'https://sunbelt.herokuapp.com/graphql',
                  'prod' : ''}
-        self.host = hosts[server]
+        self.host = servers[server]
         super().__init__(self.host)
     
 

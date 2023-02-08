@@ -2,6 +2,9 @@
 
 import requests
 import json
+import logging
+
+log = logging.getLogger('SAWP:BASE')
 
 class SunbeltClientBase():
     
@@ -41,7 +44,8 @@ class SunbeltClientBase():
         host = self.host
 
         data = json.dumps({'query': mutation})
-
+        
+        log.debug(' Running mutation: ' + mutation)
         response = requests.post(host, data=data, headers = headers)
 
         if response.ok:
@@ -128,6 +132,8 @@ class SunbeltClientBase():
         }
         
         headers = {'Content-Type': 'application/json'}
+        
+        log.debug(' Running query: ' + query)
         
         response = requests.post(self.host, 
                           data=json.dumps(data), 

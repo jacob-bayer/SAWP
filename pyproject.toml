@@ -2,9 +2,11 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+
+
 [project]
 name = "sawp"
-version = "0.0.5"
+version = "0.0.6"
 authors = [
   { name="Jacob Bayer", email="jacobbenjaminbayer@gmail.com" },
 ]
@@ -16,6 +18,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[tool.setuptools]
+packages = ["sawp"]
 
 [project.urls]
 "Homepage" = "https://github.com/jacob-bayer/SAWP"

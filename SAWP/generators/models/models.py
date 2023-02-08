@@ -56,6 +56,9 @@ class Account(SunbeltModelBase):
         self.uid = data['sun_unique_id']
         super().__init__(sunbelt, data)
 
+    def comments(self):
+        return self._sunbelt.comments.all(sun_account_id = self.sun_unique_id)
+
 class Subreddit(SunbeltModelBase):
     
     def __init__(self, sunbelt, data):
@@ -85,7 +88,8 @@ class Post(SunbeltModelBase):
     @property
     def comments(self):
         return self._sunbelt.comments.all(sun_post_id = self.sun_unique_id)
-      
+     
+
 class Comment(SunbeltModelBase):
     def __init__(self, sunbelt, data):
         self.data = data
