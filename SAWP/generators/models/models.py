@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# There are three ways to do this. One involves returning generators for the versions
-# properties, which means a model needs to have a host pased to it, the other involves
-# instantiating a client here and using that to get the versions. The other involves adding
-# a client attribute to the model base. I think the second is the best, but I'm not sure.
-
+# TODO:
+# Try to use graphql sub objects 
+# like comment {subreddit {etc...}}
 
 class SunbeltModelBase():
     def _update_self_attrs(self, data):

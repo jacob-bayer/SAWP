@@ -87,10 +87,15 @@ class SunbeltClientBase():
             args = [x for x in args] + ['sun_version_id','sun_detail_id']
             del kwargs['detail']
 
+        list_args = ['names','reddit_ids']
+        for list_arg in list_args:
+            if list_arg in kwargs:
+                kwargs[list_arg] = ['"' + '","'.join(kwargs[list_arg]) + '"']
+                
         # converts the kind to singular if it is not already
         # if only a single id is being passed.
         # Converts to plural in any other situation
-        id_params = ['byId', 'reddit_id']
+        id_params = ['byId', 'reddit_id', 'name']
         any_term_present = any(x in kwargs for x in id_params)
         if any_term_present:
             any_id_list = any(isinstance(x, list) for x in kwargs.values())
@@ -140,7 +145,12 @@ class SunbeltClientBase():
                           headers=headers)
         
         response_json = response.json()
-        if response.ok and not response_json.get('errors'):
+        
+        # There are so many ways the error message can be delivered its hard to keep trackof them all and
+        # handle them all
+        errors = response_json.get('errors') or response_json.get('data').get(kind).get('errors')
+        return_errors = False
+        if response.ok and not errors:
             data = response_json['data']
             if data:
                 data = data[kind]
@@ -153,11 +163,19 @@ class SunbeltClientBase():
                             yield item
                     else:
                         raise Exception('Unknown type. Expected dict or list.')
+                else:
+                    return_errors = True
             else:
-                error_msg = '\n\n'.join(x['message'] for x in response_json['errors'])
-                print(query)
-                return 'GraphQL Msg: ' + error_msg
+                return_errors = True
         else:
-            error_msg = '\n\n'.join(x['message'] for x in response_json['errors'])
+            return_errors = True
+            
+        if return_errors:
+            # so many ways for the error message to be delivered...
+            if isinstance(errors[0], dict):
+                error_msg = '\n\n'.join(x['message'] for x in errors)
+            else:
+                error_msg = '\n\n'.join(x for x in errors)
+            
             print(query)
             return 'GraphQL Msg:' + error_msg
