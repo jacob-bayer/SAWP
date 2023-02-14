@@ -177,5 +177,5 @@ class SunbeltClientBase():
             else:
                 error_msg = '\n\n'.join(x for x in errors)
             
-            print(query)
+            log.debug(" Failed query:" + query)
             return 'GraphQL Msg:' + error_msg
