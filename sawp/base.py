@@ -6,6 +6,17 @@ import logging
 
 log = logging.getLogger('SAWP:BASE')
 
+def print_error_msg(errors, query):
+    # so many ways for the error message to be delivered...
+    if isinstance(errors[0], dict):
+        error_msg = '\n\n'.join(x['message'] for x in errors)
+    else:
+        error_msg = '\n\n'.join(x for x in errors)
+    
+    print(" Failed query: " + query + '\n')
+    print(" Error message: " + error_msg + '\n')
+
+
 class SunbeltClientBase():
     
     def __init__(self, host):
@@ -66,7 +77,7 @@ class SunbeltClientBase():
 
        
 
-    def query(self, kind, *args, **kwargs):
+    def query(self, kind, limit = None, fields = [], subfields = {}, **kwargs):
         """
         Search for a kind of object in the database.
 
@@ -74,17 +85,15 @@ class SunbeltClientBase():
         ----------
         kind : str
             The kind of object to search for. Can be 'posts', 'comments', 'subreddits', or 'accounts'.
-        *args : str
-            The fields to return for each object. Can be any of the fields in the object.
         **kwargs : str
             The fields to filter the search by. Can updated_before, updated_after, posted_before, or posted_after.
         """
 
-        if 'sun_unique_id' not in args:
-            args = [x for x in args] + ['sun_unique_id']
+        if 'sun_unique_id' not in fields:
+            fields += ['sun_unique_id']
             
-        if kwargs.get('detail') and 'sun_version_id' not in args:
-            args = [x for x in args] + ['sun_version_id','sun_detail_id']
+        if kwargs.get('detail') and 'sun_version_id' not in fields:
+            fields += ['sun_version_id','sun_detail_id']
             del kwargs['detail']
 
         list_args = ['names','reddit_ids']
@@ -125,7 +134,7 @@ class SunbeltClientBase():
         graphql_post_func = f'{kind}({variables_str}) ' if len(variables_str) else f'{kind} '
         
         
-        fields = self._wrap_in_brackets(' \n '.join(args))
+        fields = self._wrap_in_brackets(' \n '.join(fields))
         body = graphql_post_func + self._wrap_in_brackets(f'success errors {kind} ' + fields)
         body = self._wrap_in_brackets(body)
         
@@ -149,33 +158,26 @@ class SunbeltClientBase():
         # There are so many ways the error message can be delivered its hard to keep trackof them all and
         # handle them all
         errors = response_json.get('errors') or response_json.get('data').get(kind).get('errors')
-        return_errors = False
-        if response.ok and not errors:
-            data = response_json['data']
-            if data:
-                data = data[kind]
-                success = data.get('success')
-                if success:
-                    if isinstance(data[kind], dict):
-                        yield data[kind]
-                    elif isinstance(data[kind], list):
-                        for item in data[kind]:
-                            yield item
+        if errors:
+            print_error_msg(errors, query)
+            yield None
+        else: # Response is 200 if no errors
+            result = response_json['data'][kind][kind]
+            if not len(result):
+                yield None
+
+            if isinstance(result, dict): # kinds is singular
+                yield result
+            elif isinstance(result, list): # kinds is plural
+                results_yielded = 0
+                for item in result:
+                    if limit and results_yielded >= limit:
+                        break
                     else:
-                        raise Exception('Unknown type. Expected dict or list.')
-                else:
-                    return_errors = True
+                        yield item
+                        results_yielded += 1
+
             else:
-                return_errors = True
-        else:
-            return_errors = True
+                raise Exception('Unknown type received from API. Expected dict or list.')
             
-        if return_errors:
-            # so many ways for the error message to be delivered...
-            if isinstance(errors[0], dict):
-                error_msg = '\n\n'.join(x['message'] for x in errors)
-            else:
-                error_msg = '\n\n'.join(x for x in errors)
-            
-            log.debug(" Failed query:" + query)
-            return 'GraphQL Msg:' + error_msg
+

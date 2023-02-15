@@ -11,15 +11,12 @@ class SunbeltModelBase():
     
     def __init__(self, sunbelt, data):
         self._update_self_attrs(data)
-        self._sunbelt = sunbelt
+        self._sunbelt = sunbeltcd
 
     def _add_fields(self, *args):
-        query = self._sunbelt.query(self.kind, byId = self.uid, *args)
-        try:
-            data = next(query)
+        query = self._sunbelt.query(self.kind, byId = self.uid, fields = list(args))
+        data = next(query)
             self._update_self_attrs(data)
-        except StopIteration as msg:
-            raise AttributeError(msg)
         
 
     def __getattr__(self, name):
@@ -29,6 +26,7 @@ class SunbeltModelBase():
             raise AttributeError
             
         # This is a mess and should be changed
+
         try:
             return getattr(super().__getattribute__(name), name)
         except AttributeError:
@@ -77,7 +75,10 @@ class Post(SunbeltModelBase):
 
     @property
     def author(self):
-        return self._sunbelt.accounts.get(self.sun_account_id)
+        if self.sun_account_id:
+            return self._sunbelt.accounts.get(self.sun_account_id)
+        else:
+            return None
 
     @property
     def versions(self):
@@ -98,7 +99,10 @@ class Comment(SunbeltModelBase):
 
     @property
     def author(self):
-        return self._sunbelt.accounts.get(self.sun_account_id)
+        if self.sun_account_id:
+            return self._sunbelt.accounts.get(self.sun_account_id)
+        else:
+            return None
 
     @property
     def versions(self):

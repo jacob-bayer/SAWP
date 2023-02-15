@@ -26,6 +26,7 @@ class SunbeltReadGeneratorBase():
 
         return self.model(self._sunbelt, data)
 
+
     def _last(self, *args, **kwargs):
         """
         Returns the last instance of the object from the database
@@ -38,27 +39,43 @@ class SunbeltReadGeneratorBase():
         
         return self.model(self._sunbelt, data)
 
-    def _all(self, *args, **kwargs):
+
+    def search(self, limit = None, fields = [], **kwargs):
+        """
+        Alias for query but for self.kinds
+        """
+        query = self._sunbelt.query(self.kinds, limit = limit, fields = fields, **kwargs)
+        for data in query:
+            if data:
+                yield self.model(self._sunbelt, data)
+
+
+
+    def _all(self, limit = None, fields = [], **kwargs):
+        """
+        Alias for search but uses no search terms
+        """
         if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
              del kwargs['sun_unique_id']
-        query = self._sunbelt.query(self.kinds, *args, **kwargs)
-        return [self.model(self._sunbelt, data) for data in query]
-
-    def search(self, kind = None, *args, **kwargs):
-        if not kind:
-            kind = self.kind
-        query = self._sunbelt.query(kind, *args, **kwargs)
-        # TODO: Query should return None instead of thowing 
-        # an exception
-        try:
-            data = next(query)
-            return self.model(self._sunbelt, data)
-        except StopIteration as graphql_msg:
-            return None
         
-    
-    def get(self, by_id):
-        return self.search(self.kind, 'sun_unique_id', byId = by_id)
+        if len(kwargs):
+            print('DEPRECATION: Use search instead of all with search terms.')
+
+        # Returns a generator
+        return self.search(limit = limit, fields = fields)    
+
+
+    def get(self, sun_or_reddit_id):
+        """
+        Returns the first object with the given sun_unique_id or reddit_unique_id
+        """
+        if isinstance(sun_or_reddit_id, str):
+            kwargs = {'reddit_id': sun_or_reddit_id}
+        else:
+            kwargs = {f'byId': sun_or_reddit_id}
+
+        data = next(self._sunbelt.query(self.kind, **kwargs))
+        return self.model(self._sunbelt, data)
 
 class SunbeltWriteGeneratorBase():
     """
