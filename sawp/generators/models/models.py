@@ -11,11 +11,12 @@ class SunbeltModelBase():
     
     def __init__(self, sunbelt, data):
         self._update_self_attrs(data)
-        self._sunbelt = sunbeltcd
+        self._sunbelt = sunbelt
 
     def _add_fields(self, *args):
         query = self._sunbelt.query(self.kind, byId = self.uid, fields = list(args))
         data = next(query)
+        if data:
             self._update_self_attrs(data)
         
 
