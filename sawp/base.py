@@ -17,7 +17,7 @@ def print_error_msg(errors, query):
     print(" Error message: " + error_msg + '\n')
 
 
-class SunbeltClientBase():
+class SunbeltClientBase:
     
     def __init__(self, host):
         self.host = host
@@ -88,9 +88,15 @@ class SunbeltClientBase():
         **kwargs : str
             The fields to filter the search by. Can updated_before, updated_after, posted_before, or posted_after.
         """
-
+        
         if 'sun_unique_id' not in fields:
             fields += ['sun_unique_id']
+            
+        for field, values in subfields.items():
+            values_str = ' '.join(values)
+            subfield_str = f'{field} { {values_str} }'.replace("'",'')
+            fields += [subfield_str]
+            
             
         if kwargs.get('detail') and 'sun_version_id' not in fields:
             fields += ['sun_version_id','sun_detail_id']

@@ -40,11 +40,12 @@ class SunbeltReadGeneratorBase():
         return self.model(self._sunbelt, data)
 
 
-    def search(self, limit = None, fields = [], **kwargs):
+    def search(self, limit = None, fields = [], subfields = {}, **kwargs):
         """
         Alias for query but for self.kinds
         """
-        query = self._sunbelt.query(self.kinds, limit = limit, fields = fields, **kwargs)
+        query = self._sunbelt.query(self.kinds, limit = limit, fields = fields, 
+                                    subfields = subfields, **kwargs)
         for data in query:
             if data:
                 yield self.model(self._sunbelt, data)
@@ -72,10 +73,11 @@ class SunbeltReadGeneratorBase():
         if isinstance(sun_or_reddit_id, str):
             kwargs = {'reddit_id': sun_or_reddit_id}
         else:
-            kwargs = {f'byId': sun_or_reddit_id}
+            kwargs = {'byId': sun_or_reddit_id}
 
         data = next(self._sunbelt.query(self.kind, **kwargs))
-        return self.model(self._sunbelt, data)
+        if data:
+            return self.model(self._sunbelt, data)
 
 class SunbeltWriteGeneratorBase():
     """

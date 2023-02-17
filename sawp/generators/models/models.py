@@ -10,7 +10,8 @@ class SunbeltModelBase():
             setattr(self, attr, value)
     
     def __init__(self, sunbelt, data):
-        self._update_self_attrs(data)
+        #breakpoint()
+        self.__dict__.update(data)
         self._sunbelt = sunbelt
 
     def _add_fields(self, *args):
@@ -54,7 +55,7 @@ class Account(SunbeltModelBase):
         super().__init__(sunbelt, data)
 
     def comments(self):
-        return self._sunbelt.comments.all(sun_account_id = self.sun_unique_id)
+        return self._sunbelt.comments.search(sun_account_id = self.sun_unique_id)
 
 class Subreddit(SunbeltModelBase):
     
@@ -83,11 +84,11 @@ class Post(SunbeltModelBase):
 
     @property
     def versions(self):
-        return self._sunbelt.post_details.all(sun_post_id = self.sun_unique_id)
+        return self._sunbelt.post_details.search(sun_post_id = self.sun_unique_id)
 
     @property
     def comments(self):
-        return self._sunbelt.comments.all(sun_post_id = self.sun_unique_id)
+        return self._sunbelt.comments.search(sun_post_id = self.sun_unique_id)
      
 
 class Comment(SunbeltModelBase):
@@ -107,7 +108,7 @@ class Comment(SunbeltModelBase):
 
     @property
     def versions(self):
-        return self._sunbelt.comment_details.all(sun_comment_id = self.sun_unique_id)
+        return self._sunbelt.comment_details.search(sun_comment_id = self.sun_unique_id)
 
     @property
     def post(self):
