@@ -10,13 +10,13 @@ class SunbeltModelBase():
             setattr(self, attr, value)
     
     def __init__(self, sunbelt, data):
-        #breakpoint()
         self.__dict__.update(data)
         self._sunbelt = sunbelt
 
-    def _add_fields(self, *args):
-        query = self._sunbelt.query(self.kind, byId = self.uid, fields = list(args))
-        data = next(query)
+    def _add_fields(self, *fields):
+        # Can only take fields, not subfields
+        data = self._sunbelt.query(self.kind, byId = self.uid, 
+                                    fields = list(fields))
         if data:
             self._update_self_attrs(data)
         
@@ -28,11 +28,12 @@ class SunbeltModelBase():
             raise AttributeError
             
         # This is a mess and should be changed
-
+        
         try:
             return getattr(super().__getattribute__(name), name)
         except AttributeError:
             try:
+                # Adding subfields should be done via the model
                 self._add_fields(name)
                 return super().__getattribute__(name)
             except AttributeError as msg:
@@ -84,12 +85,52 @@ class Post(SunbeltModelBase):
 
     @property
     def versions(self):
-        return self._sunbelt.post_details.search(sun_post_id = self.sun_unique_id)
-
+        if 'versions' not in self.data:
+            data_w_version = self._sunbelt.query(self.kind, byId = self.uid, 
+                                        subfields = {'versions' : {
+                                            'sun_unique_id',
+                                            'sun_post_version_id',
+                                            'sun_detail_id'}})
+        else:
+            data_w_version = self.data
+            
+        for version_data in data_w_version['versions']:
+            yield PostDetail(self._sunbelt, version_data)
+    
     @property
     def comments(self):
         return self._sunbelt.comments.search(sun_post_id = self.sun_unique_id)
      
+    @property
+    def subreddit(self):
+        if 'subreddit' not in self.data:
+            data_w_subreddit = self._sunbelt.query(self.kind, byId = self.uid, 
+                                        subfields = {'subreddits' : {
+                                            'sun_unique_id', 'display_name'}})
+        else:
+            data_w_subreddit = self.data
+            
+        return Subreddit(self._sunbelt, data_w_subreddit['subreddit'])
+            
+        
+class CommentDetail(SunbeltModelBase):
+
+    def __init__(self, sunbelt, data):
+        self.data = data
+        self.kind = 'commentdetail'
+        self.kinds = 'commentdetails'
+        super().__init__(sunbelt, data)
+        
+        # This overrides the data that was put in, which is necessary
+        # if you want these to be the final values
+        self.sun_comment_id = data['sun_unique_id']
+        self.uid = data['sun_detail_id']
+
+        
+        
+    def __repr__(self):
+        return f'CommentVersion(SunComment = {self.sun_comment_id} , SunVersion = {self.sun_version_id})'
+
 
 class Comment(SunbeltModelBase):
     def __init__(self, sunbelt, data):
@@ -108,18 +149,30 @@ class Comment(SunbeltModelBase):
 
     @property
     def versions(self):
-        return self._sunbelt.comment_details.search(sun_comment_id = self.sun_unique_id)
+        if 'versions' not in self.data:
+            data_w_version = self._sunbelt.query(self.kind, byId = self.uid, 
+                                        subfields = {'versions' : {
+                                            'sun_unique_id',
+                                            'sun_comment_version_id',
+                                            'sun_detail_id'}})
+        else:
+            data_w_version = self.data
+            
+        for version_data in data_w_version['versions']:
+            yield CommentDetail(self._sunbelt, version_data)
 
+
+                
     @property
     def post(self):
-        return self._sunbelt.posts.get(self.sun_post_id)
+        if self.post:
+            return self._sunbelt.posts.get(self.sun_post_id)
 
     @property
     def parent(self):
         if self.sun_parent_id:
             return self._sunbelt.comments.get(self.sun_parent_id) or self._sunbelt.posts.get(self.sun_parent_id)
-        else:
-            return None
+
     
 class PostDetail(SunbeltModelBase):
 
@@ -137,23 +190,6 @@ class PostDetail(SunbeltModelBase):
     def __repr__(self):
         return f'PostVersion(SunPost = {self.sun_post_id} , SunVersion = {self.sun_version_id})'
 
-class CommentDetail(SunbeltModelBase):
-
-    def __init__(self, sunbelt, data):
-        self.data = data
-        self.kind = 'commentdetail'
-        self.kinds = 'commentdetails'
-        super().__init__(sunbelt, data)
-        
-        # This overrides the data that was put in, which is necessary
-        # if you want these to be the final values
-        self.sun_comment_id = data['sun_unique_id']
-        self.uid = data['sun_detail_id']
-
-        
-        
-    def __repr__(self):
-        return f'CommentVersion(SunComment = {self.sun_comment_id} , SunVersion = {self.sun_version_id})'
 
 class SubredditDetail(SunbeltModelBase):
 

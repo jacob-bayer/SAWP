@@ -75,9 +75,10 @@ class SunbeltClientBase:
             return {'errors' : error_msg,
                     'query' : debugger_mutation}
 
+
        
 
-    def query(self, kind, limit = None, fields = [], subfields = {}, **kwargs):
+    def _query(self, kind, limit = None, fields = None, subfields = None, **kwargs):
         """
         Search for a kind of object in the database.
 
@@ -88,6 +89,9 @@ class SunbeltClientBase:
         **kwargs : str
             The fields to filter the search by. Can updated_before, updated_after, posted_before, or posted_after.
         """
+        
+        fields = fields if fields else []
+        subfields = subfields if subfields else {}
         
         if 'sun_unique_id' not in fields:
             fields += ['sun_unique_id']
@@ -107,20 +111,7 @@ class SunbeltClientBase:
             if list_arg in kwargs:
                 kwargs[list_arg] = ['"' + '","'.join(kwargs[list_arg]) + '"']
                 
-        # converts the kind to singular if it is not already
-        # if only a single id is being passed.
-        # Converts to plural in any other situation
-        id_params = ['byId', 'reddit_id', 'name']
-        any_term_present = any(x in kwargs for x in id_params)
-        if any_term_present:
-            any_id_list = any(isinstance(x, list) for x in kwargs.values())
-            if not any_id_list and kind.endswith('s'):
-                kind = kind[:-1]
-        else:
-            if not kind.endswith('s'):
-                kind = kind + 's'
                 
-            
 
         #variables_dict = {'$' + key: value for key, value in kwargs.items()}
         variables_str = ', '.join(f'{key}: "{value}"' if isinstance(value, str) else f'{key}: {str(value)}' for key, value in kwargs.items())
@@ -150,7 +141,7 @@ class SunbeltClientBase:
           'query': query,
           #'variables' : variables
         }
-        
+
         headers = {'Content-Type': 'application/json'}
         
         log.debug(' Running query: ' + query)
@@ -160,7 +151,7 @@ class SunbeltClientBase:
                           headers=headers)
         
         response_json = response.json()
-        
+
         # There are so many ways the error message can be delivered its hard to keep trackof them all and
         # handle them all
         errors = response_json.get('errors') or response_json.get('data').get(kind).get('errors')
@@ -171,6 +162,7 @@ class SunbeltClientBase:
             result = response_json['data'][kind][kind]
             if not len(result):
                 yield None
+                
 
             if isinstance(result, dict): # kinds is singular
                 yield result
@@ -187,3 +179,23 @@ class SunbeltClientBase:
                 raise Exception('Unknown type received from API. Expected dict or list.')
             
 
+    def query(self, kind, limit = None, fields = None, subfields = None, **kwargs):
+
+        kind_is_plural = kind.endswith('s')
+        id_params = ['byId', 'reddit_id', 'name']
+        any_term_present = any(x in kwargs for x in id_params)
+        if kind_is_plural and any_term_present:
+            raise ValueError('Use plural ID argument for plural kind.')
+
+        elif not kind_is_plural and not any_term_present:
+            raise ValueError('Provide a single ID if searching for a single object.')
+        
+        
+        result = self._query(kind, limit = limit, 
+                            fields = fields, 
+                            subfields = subfields, 
+                            **kwargs)
+        if kind_is_plural:
+            return result
+        else:
+            return next(result)

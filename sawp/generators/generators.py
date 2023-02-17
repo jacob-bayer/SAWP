@@ -20,7 +20,7 @@ class SunbeltReadGeneratorBase():
             del kwargs['sun_unique_id']
 
         try:
-            data = next(self._sunbelt.query(self.kind, byId = 1, **kwargs))
+            data = self._sunbelt.query(self.kind, byId = 1, **kwargs)
         except:
             data = next(self._sunbelt.query(self.kinds, orderBy = {'sun_unique_id': 'asc'}, **kwargs))
 
@@ -40,10 +40,11 @@ class SunbeltReadGeneratorBase():
         return self.model(self._sunbelt, data)
 
 
-    def search(self, limit = None, fields = [], subfields = {}, **kwargs):
+    def search(self, limit = None, fields = None, subfields = None, **kwargs):
         """
         Alias for query but for self.kinds
         """
+        
         query = self._sunbelt.query(self.kinds, limit = limit, fields = fields, 
                                     subfields = subfields, **kwargs)
         for data in query:
@@ -52,10 +53,11 @@ class SunbeltReadGeneratorBase():
 
 
 
-    def _all(self, limit = None, fields = [], **kwargs):
+    def _all(self, limit = None, fields = None, subfields = None, **kwargs):
         """
         Alias for search but uses no search terms
         """
+        
         if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
              del kwargs['sun_unique_id']
         
@@ -63,10 +65,10 @@ class SunbeltReadGeneratorBase():
             print('DEPRECATION: Use search instead of all with search terms.')
 
         # Returns a generator
-        return self.search(limit = limit, fields = fields)    
+        return self.search(limit = limit, fields = fields, subfields = subfields)    
 
 
-    def get(self, sun_or_reddit_id):
+    def get(self, sun_or_reddit_id, fields = None, subfields = None):
         """
         Returns the first object with the given sun_unique_id or reddit_unique_id
         """
@@ -75,7 +77,8 @@ class SunbeltReadGeneratorBase():
         else:
             kwargs = {'byId': sun_or_reddit_id}
 
-        data = next(self._sunbelt.query(self.kind, **kwargs))
+        data = self._sunbelt.query(self.kind, fields = fields, 
+                                   subfields = subfields, **kwargs)
         if data:
             return self.model(self._sunbelt, data)
 
