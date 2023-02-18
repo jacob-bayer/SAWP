@@ -13,6 +13,7 @@ class SunbeltModelBase():
         self.__dict__.update(data)
         self._sunbelt = sunbelt
 
+
     def _add_fields(self, *fields):
         # Can only take fields, not subfields
         data = self._sunbelt.query(self.kind, byId = self.uid, 
@@ -21,23 +22,25 @@ class SunbeltModelBase():
             self._update_self_attrs(data)
         
 
-    def __getattr__(self, name):
 
-        # https://stackoverflow.com/a/61413243/11477615
-        if name.startswith('_') or name in ['shape','size']:
-            raise AttributeError
-            
-        # This is a mess and should be changed
-        
-        try:
-            return getattr(super().__getattribute__(name), name)
-        except AttributeError:
-            try:
-                # Adding subfields should be done via the model
-                self._add_fields(name)
-                return super().__getattribute__(name)
-            except AttributeError as msg:
-                raise AttributeError(msg)
+#     def __getattr__(self, name):
+# 
+#         # https://stackoverflow.com/a/61413243/11477615
+#         if name.startswith('_') or name in ['shape','size']:
+#             raise AttributeError
+#             
+#         # This is a mess and should be changed
+#         
+#         try:
+#             return getattr(super().__getattribute__(name), name)
+#         except AttributeError:
+#             try:
+#                 # Adding subfields should be done via the model
+#                 self._add_fields(name)
+#                 return super().__getattribute__(name)
+#             except AttributeError as msg:
+#                 raise AttributeError(msg)
+
 
     def __repr__(self):
         return f'Sun{self.kind.capitalize()}({self.sun_unique_id})'
@@ -165,13 +168,32 @@ class Comment(SunbeltModelBase):
                 
     @property
     def post(self):
-        if self.post:
-            return self._sunbelt.posts.get(self.sun_post_id)
+        if 'post' not in self.data:
+            data_w_post = self._sunbelt.query(self.kind, byId = self.uid, 
+                                        subfields = {'post' : {
+                                            'sun_unique_id'}})
+        else:
+            data_w_post = self.data
+        
+        post_data = data_w_post['post']
+        if post_data:
+            return Post(self._sunbelt, post_data)
 
     @property
     def parent(self):
-        if self.sun_parent_id:
-            return self._sunbelt.comments.get(self.sun_parent_id) or self._sunbelt.posts.get(self.sun_parent_id)
+        if self.reddit_parent_id:
+            return self._sunbelt.comments.get(self.reddit_parent_id) or self._sunbelt.posts.get(self.reddit_parent_id)
+
+    @property
+    def subreddit(self):
+        if 'subreddit' not in self.data:
+            data_w_subreddit = self._sunbelt.query(self.kind, byId = self.uid, 
+                                        subfields = {'subreddit' : {
+                                            'sun_unique_id', 'display_name'}})
+        else:
+            data_w_subreddit = self.data
+            
+        return Subreddit(self._sunbelt, data_w_subreddit['subreddit'])
 
     
 class PostDetail(SunbeltModelBase):

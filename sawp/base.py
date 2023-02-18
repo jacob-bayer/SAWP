@@ -45,8 +45,7 @@ class SunbeltClientBase:
         mutation_type = 'create' + kind.title()
         mutation_title = f' mutation new{mutation_type} '
         mutation_args = f' {mutation_type}(from_json: """{from_json}""") '
-        kind_fields = kind + ' { sun_unique_id most_recent_sun_version_id most_recent_sun_detail_id } '
-        mutation_return_fields = self._wrap_in_brackets(f' success errors created_new_version {kind_fields}')
+        mutation_return_fields = self._wrap_in_brackets(' success errors sun_unique_id most_recent_version_id most_recent_detail_id created_new_version ')
         
         mutation = mutation_title + self._wrap_in_brackets(mutation_args + mutation_return_fields)
         
@@ -78,7 +77,7 @@ class SunbeltClientBase:
 
        
 
-    def _query(self, kind, limit = None, fields = None, subfields = None, **kwargs):
+    def _query(self, kind, fields = None, subfields = None, **kwargs):
         """
         Search for a kind of object in the database.
 
@@ -92,6 +91,7 @@ class SunbeltClientBase:
         
         fields = fields if fields else []
         subfields = subfields if subfields else {}
+        
         
         if 'sun_unique_id' not in fields:
             fields += ['sun_unique_id']
@@ -156,6 +156,7 @@ class SunbeltClientBase:
         # handle them all
         errors = response_json.get('errors') or response_json.get('data').get(kind).get('errors')
         if errors:
+
             print_error_msg(errors, query)
             yield None
         else: # Response is 200 if no errors
@@ -167,19 +168,14 @@ class SunbeltClientBase:
             if isinstance(result, dict): # kinds is singular
                 yield result
             elif isinstance(result, list): # kinds is plural
-                results_yielded = 0
                 for item in result:
-                    if limit and results_yielded >= limit:
-                        break
-                    else:
-                        yield item
-                        results_yielded += 1
+                    yield item
 
             else:
                 raise Exception('Unknown type received from API. Expected dict or list.')
             
 
-    def query(self, kind, limit = None, fields = None, subfields = None, **kwargs):
+    def query(self, kind, fields = None, subfields = None, **kwargs):
 
         kind_is_plural = kind.endswith('s')
         id_params = ['byId', 'reddit_id', 'name']
@@ -191,7 +187,7 @@ class SunbeltClientBase:
             raise ValueError('Provide a single ID if searching for a single object.')
         
         
-        result = self._query(kind, limit = limit, 
+        result = self._query(kind, 
                             fields = fields, 
                             subfields = subfields, 
                             **kwargs)

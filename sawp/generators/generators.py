@@ -22,7 +22,9 @@ class SunbeltReadGeneratorBase():
         try:
             data = self._sunbelt.query(self.kind, byId = 1, **kwargs)
         except:
-            data = next(self._sunbelt.query(self.kinds, orderBy = {'sun_unique_id': 'asc'}, **kwargs))
+            data = next(self._sunbelt.query(self.kinds, 
+                                            orderBy = {'sun_unique_id': 'asc'}, 
+                                            limit = 1))
 
         return self.model(self._sunbelt, data)
 
@@ -35,17 +37,19 @@ class SunbeltReadGeneratorBase():
         if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
              del kwargs['sun_unique_id']
 
-        data = next(self._sunbelt.query(self.kinds, orderBy = {'sun_unique_id': 'desc'}))
+        data = next(self._sunbelt.query(self.kinds, 
+                                        orderBy = {'sun_unique_id': 'desc'},
+                                        limit = 1))
         
         return self.model(self._sunbelt, data)
 
 
-    def search(self, limit = None, fields = None, subfields = None, **kwargs):
+    def search(self, fields = None, subfields = None, **kwargs):
         """
         Alias for query but for self.kinds
         """
         
-        query = self._sunbelt.query(self.kinds, limit = limit, fields = fields, 
+        query = self._sunbelt.query(self.kinds, fields = fields, 
                                     subfields = subfields, **kwargs)
         for data in query:
             if data:
@@ -53,19 +57,16 @@ class SunbeltReadGeneratorBase():
 
 
 
-    def _all(self, limit = None, fields = None, subfields = None, **kwargs):
+    def _all(self, fields = None, subfields = None, limit = None):
         """
         Alias for search but uses no search terms
         """
         
-        if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
-             del kwargs['sun_unique_id']
-        
-        if len(kwargs):
-            print('DEPRECATION: Use search instead of all with search terms.')
-
+        if limit:
+            kwargs = {'limit':limit}
         # Returns a generator
-        return self.search(limit = limit, fields = fields, subfields = subfields)    
+        return self.search(fields = fields,
+                           subfields = subfields, **kwargs)    
 
 
     def get(self, sun_or_reddit_id, fields = None, subfields = None):

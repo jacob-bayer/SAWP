@@ -6,12 +6,14 @@ from .generators import generators
 
 class SunbeltClient(SunbeltClientBase):
     
-    def __init__(self, server = 'local'):
+    def __init__(self, server = 'local', disable_postfetching = False):
         servers = {'local': "http://127.0.0.1:5000/graphql",
                  'heroku' : 'https://sunbelt.herokuapp.com/graphql',
                  'prod' : ''}
         self.host = servers[server]
         super().__init__(self.host)
+        
+        self._disable_postfetching = disable_postfetching
 
         self.posts = generators.PostGenerator(self)
         self.comments = generators.CommentGenerator(self)
@@ -19,6 +21,7 @@ class SunbeltClient(SunbeltClientBase):
         self.subreddits = generators.SubredditGenerator(self)
         self.post_details = generators.PostDetailGenerator(self)
         self.comment_details = generators.CommentDetailGenerator(self)
+
 
         self.generator_lookup = {'posts': self.posts,
                                 'comments': self.comments,
