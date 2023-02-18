@@ -114,6 +114,7 @@ class SunbeltClientBase:
                 
 
         #variables_dict = {'$' + key: value for key, value in kwargs.items()}
+        kwargs = {key: value for key, value in kwargs.items() if value}
         variables_str = ', '.join(f'{key}: "{value}"' if isinstance(value, str) else f'{key}: {str(value)}' for key, value in kwargs.items())
         variables_str = variables_str.replace("'", '')
     # =============================================================================

@@ -11,33 +11,35 @@ class SunbeltReadGeneratorBase():
         self._sunbelt = sunbelt
 
     
-    def _first(self, *args, **kwargs):
+    def _first(self, fields = None, subfields = None):
         """
         Returns the first instance of the object from the database
         """
 
-        if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
-            del kwargs['sun_unique_id']
+        #if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
+        #    del kwargs['sun_unique_id']
 
         try:
-            data = self._sunbelt.query(self.kind, byId = 1, **kwargs)
+            data = self._sunbelt.query(self.kind, byId = 1, fields = fields, subfields = subfields)
         except:
-            data = next(self._sunbelt.query(self.kinds, 
+            data = next(self._sunbelt.query(self.kinds, fields = fields, 
+                                            subfields = subfields,
                                             orderBy = {'sun_unique_id': 'asc'}, 
                                             limit = 1))
 
         return self.model(self._sunbelt, data)
 
 
-    def _last(self, *args, **kwargs):
+    def _last(self, fields = None, subfields = None):
         """
         Returns the last instance of the object from the database
         """
 
-        if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
-             del kwargs['sun_unique_id']
+        #if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
+        #     del kwargs['sun_unique_id']
 
-        data = next(self._sunbelt.query(self.kinds, 
+        data = next(self._sunbelt.query(self.kinds, fields = fields, 
+                                        subfields = subfields,
                                         orderBy = {'sun_unique_id': 'desc'},
                                         limit = 1))
         
