@@ -45,7 +45,8 @@ class SunbeltClientBase:
         mutation_type = 'create' + kind.title()
         mutation_title = f' mutation new{mutation_type} '
         mutation_args = f' {mutation_type}(from_json: """{from_json}""") '
-        mutation_return_fields = self._wrap_in_brackets(' success errors sun_unique_id most_recent_version_id most_recent_detail_id created_new_version ')
+        writeresult = 'objs_created ' + self._wrap_in_brackets(' sun_unique_id most_recent_version_id most_recent_detail_id ')
+        mutation_return_fields = self._wrap_in_brackets(' success errors ' + writeresult)
         
         mutation = mutation_title + self._wrap_in_brackets(mutation_args + mutation_return_fields)
         
@@ -64,12 +65,12 @@ class SunbeltClientBase:
             if not errors:
                 return response['data'][mutation_type]
             else:
-                debugger_mutation = mutation_title + f' {mutation_type}(from_json: """json""") ' + mutation_return_fields
+                debugger_mutation = mutation_title + self._wrap_in_brackets(f' {mutation_type}(from_json: """json""") ' + mutation_return_fields)
                 error_msg = '\n\n'.join(x['message'] for x in response['errors'])
                 return {'errors' : error_msg,
                         'query' : debugger_mutation}
         else:
-            debugger_mutation = mutation_title + f' {mutation_type}(from_json: """json""") ' + mutation_return_fields
+            debugger_mutation = mutation_title + self._wrap_in_brackets(f' {mutation_type}(from_json: """json""") ' + mutation_return_fields)
             error_msg = '\n\n'.join(x['message'] for x in response.json()['errors'])
             return {'errors' : error_msg,
                     'query' : debugger_mutation}
