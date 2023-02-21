@@ -23,23 +23,23 @@ class SunbeltModelBase():
         
 
 
-#     def __getattr__(self, name):
-# 
-#         # https://stackoverflow.com/a/61413243/11477615
-#         if name.startswith('_') or name in ['shape','size']:
-#             raise AttributeError
-#             
-#         # This is a mess and should be changed
-#         
-#         try:
-#             return getattr(super().__getattribute__(name), name)
-#         except AttributeError:
-#             try:
-#                 # Adding subfields should be done via the model
-#                 self._add_fields(name)
-#                 return super().__getattribute__(name)
-#             except AttributeError as msg:
-#                 raise AttributeError(msg)
+    def __getattr__(self, name):
+
+        # https://stackoverflow.com/a/61413243/11477615
+        if name.startswith('_') or name in ['shape','size']:
+            raise AttributeError
+            
+        # This is a mess and should be changed
+        
+        try:
+            return getattr(super().__getattribute__(name), name)
+        except AttributeError:
+            try:
+                # Adding subfields should be done via the model
+                self._add_fields(name)
+                return super().__getattribute__(name)
+            except AttributeError as msg:
+                raise AttributeError(msg)
 
 
     def __repr__(self):

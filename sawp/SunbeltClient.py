@@ -2,16 +2,32 @@
 
 from .base import SunbeltClientBase
 from .generators import generators
-
+import requests
 
 class SunbeltClient(SunbeltClientBase):
     
-    def __init__(self, server = 'local', disable_postfetching = False):
-        servers = {'local': "http://127.0.0.1:5000/graphql",
-                 'heroku' : 'https://sunbelt.herokuapp.com/graphql',
+    def _authenticate(self, host, username, password):
+        url = host + '/auth'
+        data = {'username': username, 'password': password}
+        response = requests.post(url, json=data)
+        response.raise_for_status()
+        self._token = response.json()['access_token']
+        self._headers = {'Authorization': 'Bearer ' + self._token}
+        self._authenticated = True
+
+
+    def __init__(self, username = None, password = None, server = 'local', disable_postfetching = False):
+        servers = {'local': "http://127.0.0.1:5000",
+                 'heroku' : 'https://sunbelt.herokuapp.com',
                  'prod' : ''}
-        self.host = servers[server]
-        super().__init__(self.host)
+
+        host = servers[server]
+        self._authenticated = False
+        if username and password:
+            self._authenticate(host, username, password)
+
+
+        super().__init__(host)
         
         self._disable_postfetching = disable_postfetching
 

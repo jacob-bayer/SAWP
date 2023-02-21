@@ -26,8 +26,8 @@ class SunbeltReadGeneratorBase():
                                             subfields = subfields,
                                             orderBy = {'sun_unique_id': 'asc'}, 
                                             limit = 1))
-
-        return self.model(self._sunbelt, data)
+        if data:
+            return self.model(self._sunbelt, data)
 
 
     def _last(self, fields = None, subfields = None):
@@ -43,7 +43,8 @@ class SunbeltReadGeneratorBase():
                                         orderBy = {'sun_unique_id': 'desc'},
                                         limit = 1))
         
-        return self.model(self._sunbelt, data)
+        if data:
+            return self.model(self._sunbelt, data)
 
 
     def search(self, fields = None, subfields = None, **kwargs):
@@ -63,9 +64,10 @@ class SunbeltReadGeneratorBase():
         """
         Alias for search but uses no search terms
         """
-        
+        kwargs = {}
         if limit:
-            kwargs = {'limit':limit}
+            kwargs['limit'] = limit
+
         # Returns a generator
         return self.search(fields = fields,
                            subfields = subfields, **kwargs)    

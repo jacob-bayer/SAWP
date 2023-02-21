@@ -3,6 +3,7 @@
 import requests
 import json
 import logging
+import aiohttp
 
 log = logging.getLogger('SAWP:BASE')
 
@@ -21,78 +22,32 @@ class SunbeltClientBase:
     
     def __init__(self, host):
         self.host = host
+        self.graphql_url = self.host + '/graphql'
      
     def _wrap_in_brackets(self, string):
         return '{' + string + '}'
     
-    def mutation(self, kind, from_json):
-        """
-        Create a new object in the database.
+    def batch_add_data(self, json_data):
+        if not self._authenticated:
+            raise Exception('Must authenticate before adding data')
+        batch_data_url = self.host + '/add_batch_data'
+        response = requests.post(batch_data_url, headers=self._headers, json=json_data)
+        response.raise_for_status()
+        return response
 
-        Parameters
-        ----------
-        kind : str
-            The kind of object to create. Can be 'post', 'comment', 'subreddit', or 'account'.
-        from_json : dict
-            The data to create the object with.
+    # async batch add data
+    async def async_batch_add_data(self, json_data):
+        if not self._authenticated:
+            raise Exception('Must authenticate before adding data')
+        batch_data_url = self.host + '/add_batch_data'
+        async with aiohttp.ClientSession() as session:
+            async with session.post(batch_data_url, headers=self._headers, json=json_data) as response:
+                response.raise_for_status()
+                return await response.json()
 
-        Returns
-        -------
-        dict
-            The data of the created object.
-        """
-
-        mutation_type = 'create' + kind.title()
-        mutation_title = f' mutation new{mutation_type} '
-        mutation_args = f' {mutation_type}(from_json: """{from_json}""") '
-        writeresult = 'objs_created ' + self._wrap_in_brackets(' sun_unique_id most_recent_version_id most_recent_detail_id ')
-        mutation_return_fields = self._wrap_in_brackets(' success errors ' + writeresult)
-        
-        mutation = mutation_title + self._wrap_in_brackets(mutation_args + mutation_return_fields)
-        
-        headers = {'Content-Type': 'application/json'}
-
-        host = self.host
-
-        data = json.dumps({'query': mutation})
-        
-        log.debug(' Running mutation: ' + mutation)
-        response = requests.post(host, data=data, headers = headers)
-
-        if response.ok:
-            response = response.json()
-            errors = response.get('errors')
-            if not errors:
-                return response['data'][mutation_type]
-            else:
-                debugger_mutation = mutation_title + self._wrap_in_brackets(f' {mutation_type}(from_json: """json""") ' + mutation_return_fields)
-                error_msg = '\n\n'.join(x['message'] for x in response['errors'])
-                return {'errors' : error_msg,
-                        'query' : debugger_mutation}
-        else:
-            debugger_mutation = mutation_title + self._wrap_in_brackets(f' {mutation_type}(from_json: """json""") ' + mutation_return_fields)
-            error_msg = '\n\n'.join(x['message'] for x in response.json()['errors'])
-            return {'errors' : error_msg,
-                    'query' : debugger_mutation}
-
-
-       
-
-    def _query(self, kind, fields = None, subfields = None, **kwargs):
-        """
-        Search for a kind of object in the database.
-
-        Parameters
-        ----------
-        kind : str
-            The kind of object to search for. Can be 'posts', 'comments', 'subreddits', or 'accounts'.
-        **kwargs : str
-            The fields to filter the search by. Can updated_before, updated_after, posted_before, or posted_after.
-        """
-        
+    def _generate_query_string(self, kind, fields, subfields, **kwargs):
         fields = fields if fields else []
         subfields = subfields if subfields else {}
-        
         
         if 'sun_unique_id' not in fields:
             fields += ['sun_unique_id']
@@ -101,7 +56,6 @@ class SunbeltClientBase:
             values_str = ' '.join(values)
             subfield_str = f'{field} { {values_str} }'.replace("'",'')
             fields += [subfield_str]
-            
             
         if kwargs.get('detail') and 'sun_version_id' not in fields:
             fields += ['sun_version_id','sun_detail_id']
@@ -112,60 +66,39 @@ class SunbeltClientBase:
             if list_arg in kwargs:
                 kwargs[list_arg] = ['"' + '","'.join(kwargs[list_arg]) + '"']
                 
-                
-
-        #variables_dict = {'$' + key: value for key, value in kwargs.items()}
         kwargs = {key: value for key, value in kwargs.items() if value}
         variables_str = ', '.join(f'{key}: "{value}"' if isinstance(value, str) else f'{key}: {str(value)}' for key, value in kwargs.items())
         variables_str = variables_str.replace("'", '')
-    # =============================================================================
-    #         declare_args = {'$updated_before': 'String!',
-    #                      '$updated_after': 'String!',
-    #                      '$posted_before': 'String!',
-    #                      '$posted_after': 'String!'}
-    # 
-    #         declare_args = ', '.join(f'{key}: {value}' for key, value in declare_args.items()
-    #                      if variables_dict.get(key))
-    # =============================================================================
                 
-    
-        graphql_query_name = '' #f'GetPosts({declare_args}) '
         graphql_post_func = f'{kind}({variables_str}) ' if len(variables_str) else f'{kind} '
-        
         
         fields = self._wrap_in_brackets(' \n '.join(fields))
         body = graphql_post_func + self._wrap_in_brackets(f'success errors {kind} ' + fields)
-        body = self._wrap_in_brackets(body)
+        query = 'query ' + self._wrap_in_brackets(body)
         
-        query = 'query ' + graphql_query_name + body
+        return query
 
-        data = {
-          'query': query,
-          #'variables' : variables
-        }
-
-        headers = {'Content-Type': 'application/json'}
+    def _query(self, kind, fields, subfields, **kwargs):
+        
+        query = self._generate_query_string(kind, fields, subfields, **kwargs)
         
         log.debug(' Running query: ' + query)
-        
-        response = requests.post(self.host, 
-                          data=json.dumps(data), 
-                          headers=headers)
+        response = requests.post(self.graphql_url, 
+                          data=json.dumps({'query': query}), 
+                          headers={'Content-Type': 'application/json'})
         
         response_json = response.json()
 
-        # There are so many ways the error message can be delivered its hard to keep trackof them all and
+        # There are so many ways the error message can be delivered its hard to keep track of them all and
         # handle them all
         errors = response_json.get('errors') or response_json.get('data').get(kind).get('errors')
         if errors:
-
             print_error_msg(errors, query)
             yield None
         else: # Response is 200 if no errors
             result = response_json['data'][kind][kind]
             if not len(result):
                 yield None
-                
 
             if isinstance(result, dict): # kinds is singular
                 yield result
@@ -174,7 +107,7 @@ class SunbeltClientBase:
                     yield item
 
             else:
-                raise Exception('Unknown type received from API. Expected dict or list.')
+                raise Exception('Unknown type received from api. Expected dict or list.')
             
 
     def query(self, kind, fields = None, subfields = None, **kwargs):
