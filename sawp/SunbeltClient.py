@@ -5,16 +5,6 @@ from .generators import generators
 import requests
 
 class SunbeltClient(SunbeltClientBase):
-    
-    def _authenticate(self, host, username, password):
-        url = host + '/auth'
-        data = {'username': username, 'password': password}
-        response = requests.post(url, json=data)
-        response.raise_for_status()
-        self._token = response.json()['access_token']
-        self._headers = {'Authorization': 'Bearer ' + self._token}
-        self._authenticated = True
-
 
     def __init__(self, username = None, password = None, server = 'local', disable_postfetching = False):
         servers = {'local': "http://127.0.0.1:5000",
@@ -23,11 +13,13 @@ class SunbeltClient(SunbeltClientBase):
 
         host = servers[server]
         self._authenticated = False
+        self.current_user = None
+        self.host = host
+        self.graphql_url = self.host + '/graphql'
+
         if username and password:
             self._authenticate(host, username, password)
-
-
-        super().__init__(host)
+            self.current_user = username
         
         self._disable_postfetching = disable_postfetching
 

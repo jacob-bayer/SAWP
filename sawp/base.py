@@ -20,10 +20,24 @@ def print_error_msg(errors, query):
 
 class SunbeltClientBase:
     
-    def __init__(self, host):
-        self.host = host
-        self.graphql_url = self.host + '/graphql'
-     
+
+    def _authenticate(self, host, username = None, password = None):
+        url = host + '/auth'
+        self._session = requests.Session()
+        if username and password:
+            data = {'username': username, 'password': password}
+            response = self._session.post(url, data=data)
+        else: # use refresh token
+            data = {'refresh_token': self._refresh_token}
+            response = self._session.post(url, data=data)
+        response.raise_for_status()
+        response_json = response.json()
+        self._token = response_json['access_token']
+        self._session.headers.update({'Authorization': 'Bearer ' + self._token})
+        self._refresh_token = response_json['refresh_token']
+        self._authenticated = True
+
+
     def _wrap_in_brackets(self, string):
         return '{' + string + '}'
     
@@ -31,8 +45,10 @@ class SunbeltClientBase:
         if not self._authenticated:
             raise Exception('Must authenticate before adding data')
         batch_data_url = self.host + '/add_batch_data'
-        response = requests.post(batch_data_url, headers=self._headers, json=json_data)
+        response = self._session.post(batch_data_url, json=json_data)
         response.raise_for_status()
+        if response.status_code == 401:
+
         return response
 
     # async batch add data
@@ -78,9 +94,7 @@ class SunbeltClientBase:
         
         return query
 
-    def _query(self, kind, fields, subfields, **kwargs):
-        
-        query = self._generate_query_string(kind, fields, subfields, **kwargs)
+    def _query(self, kind, query):
         
         log.debug(' Running query: ' + query)
         response = requests.post(self.graphql_url, 
@@ -111,7 +125,9 @@ class SunbeltClientBase:
             
 
     def query(self, kind, fields = None, subfields = None, **kwargs):
+        
 
+        
         kind_is_plural = kind.endswith('s')
         id_params = ['byId', 'reddit_id', 'name']
         any_term_present = any(x in kwargs for x in id_params)
@@ -121,11 +137,10 @@ class SunbeltClientBase:
         elif not kind_is_plural and not any_term_present:
             raise ValueError('Provide a single ID if searching for a single object.')
         
+        query = self._generate_query_string(kind, fields, subfields, **kwargs)
         
-        result = self._query(kind, 
-                            fields = fields, 
-                            subfields = subfields, 
-                            **kwargs)
+        result = self._query(kind, query)
+        
         if kind_is_plural:
             return result
         else:
