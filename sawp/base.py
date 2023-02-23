@@ -4,6 +4,10 @@ import requests
 import json
 import logging
 import aiohttp
+import asyncio
+import time
+from itertools import islice, chain
+import threading
 
 log = logging.getLogger('SAWP:BASE')
 
@@ -17,6 +21,14 @@ def print_error_msg(errors, query):
     print(" Failed query: " + query + '\n')
     print(" Error message: " + error_msg + '\n')
 
+def chunk_list(some_list, chunk_size):
+    #result = []
+    iterable = iter(some_list)
+    while True:
+        chunk = list(islice(iterable, chunk_size))
+        if not chunk:
+            break
+        yield chunk
 
 class SunbeltClientBase:
     
@@ -75,9 +87,15 @@ class SunbeltClientBase:
                 response.raise_for_status()
                 return await response.json()
 
-    def _generate_query_string(self, kind, fields, subfields, **kwargs):
+    def _generate_query_string(self, kind, fields = None, subfields = None, total_count_only = False, **kwargs):
         fields = fields if fields else []
         subfields = subfields if subfields else {}
+        
+        if total_count_only:
+            kwargs['limit'] = 1
+        
+        
+        total_count = 'total_count' if kind.endswith('s') else ''
         
         if 'sun_unique_id' not in fields:
             fields += ['sun_unique_id']
@@ -102,18 +120,19 @@ class SunbeltClientBase:
                 
         graphql_post_func = f'{kind}({variables_str}) ' if len(variables_str) else f'{kind} '
         
-        fields = self._wrap_in_brackets(' \n '.join(fields))
-        body = graphql_post_func + self._wrap_in_brackets(f'success errors {kind} ' + fields)
+        if not total_count_only:
+            fields = f'{kind} ' + self._wrap_in_brackets(' \n '.join(fields))
+        else:
+            fields = ''
+
+        body = graphql_post_func + self._wrap_in_brackets(f'success {total_count} errors ' + fields)
         query = 'query ' + self._wrap_in_brackets(body)
         
         return query
 
-    def _query(self, kind, query):
-        
+    def _query(self, kind, query, total_count_only = False, using_pagination = False):
         log.debug(' Running query: ' + query)
-        response = requests.post(self.graphql_url, 
-                          data=json.dumps({'query': query}), 
-                          headers={'Content-Type': 'application/json'})
+        response = requests.post(self.graphql_url, data=json.dumps({'query': query}), headers={'Content-Type': 'application/json'})
         
         response_json = response.json()
 
@@ -124,7 +143,14 @@ class SunbeltClientBase:
             print_error_msg(errors, query)
             yield None
         else: # Response is 200 if no errors
-            result = response_json['data'][kind][kind]
+            data = response_json['data'][kind]
+            total_count_result = data['total_count']
+            if total_count_only:
+                yield total_count_result
+            if using_pagination:
+                print('\r', 'Total', total_count_result, kind + ':', end = ' ')
+            
+            result = data[kind]
             if not len(result):
                 yield None
 
@@ -138,24 +164,71 @@ class SunbeltClientBase:
                 raise Exception('Unknown type received from api. Expected dict or list.')
             
 
-    def query(self, kind, fields = None, subfields = None, **kwargs):
-        
-
+    def query(self, kind, fields = None, subfields = None, 
+              total_count_only = False, using_pagination = False, **kwargs):
         
         kind_is_plural = kind.endswith('s')
         id_params = ['byId', 'reddit_id', 'name']
-        any_term_present = any(x in kwargs for x in id_params)
-        if kind_is_plural and any_term_present:
+        plural_id_params = ['byIds', 'reddit_ids', 'names']
+        plural_id_term = [x for x in plural_id_params if x in kwargs]
+        id_term_present = any(x in kwargs for x in id_params)
+        if kind_is_plural and id_term_present:
             raise ValueError('Use plural ID argument for plural kind.')
 
-        elif not kind_is_plural and not any_term_present:
+        elif not kind_is_plural and not id_term_present:
             raise ValueError('Provide a single ID if searching for a single object.')
         
-        query = self._generate_query_string(kind, fields, subfields, **kwargs)
         
-        result = self._query(kind, query)
+        query = self._generate_query_string(kind, fields, subfields, total_count_only, **kwargs)
+
+        result = self._query(kind, query, total_count_only, using_pagination)
         
         if kind_is_plural:
             return result
         else:
             return next(result)
+        
+    async def _async_query(self, kind, fields = None, subfields = None, **kwargs):
+
+        total_count = next(self.query(kind, total_count_only = True, **kwargs))
+
+        kwargs['limit'] = limit = 1000
+        kwargs['offset'] = 0
+        chunks = total_count//limit + 1
+        queries = []
+        for i in range(chunks):
+            queries += [self._generate_query_string(kind, fields, **kwargs)]
+            kwargs['offset'] += limit
+
+
+        async def fetch_data(query):
+            async with aiohttp.ClientSession(headers={'Content-Type': 'application/json'}) as session:
+                data = json.dumps({'query': query})
+                async with session.post(self.graphql_url, data=data) as r:
+                    r.raise_for_status()
+                    data = await r.json()
+                    return data['data'][kind][kind]
+        
+        
+
+        # The loop only exists for the main thread so it has to be created in a new thread if doing multithreading
+        #loop = asyncio.new_event_loop()
+        #asyncio.set_event_loop(loop)
+        start_time = time.time()
+        loop = asyncio.get_event_loop()
+        all_results = []
+        for chunk in chunk_list(queries, 100):
+            tasks = []
+            for query in chunk:
+                task = loop.create_task(fetch_data(query))
+                tasks.append(task)
+            all_results += await asyncio.gather(*tasks)
+        log.info('Waiting for async query tasks to complete...')
+        all_results = list(chain.from_iterable(all_results))
+        end_time = time.time()
+        print('Time taken:', end_time - start_time)
+        return all_results
+
+    def async_query(self, kind, fields = None, subfields = None, **kwargs):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self._async_query(kind, fields, subfields, **kwargs))

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from .models import models
+from itertools import chain
+
 
 class SunbeltReadGeneratorBase():
     """
@@ -19,10 +21,7 @@ class SunbeltReadGeneratorBase():
         #if 'sun_unique_id' in kwargs and kwargs['sun_unique_id'] is None:
         #    del kwargs['sun_unique_id']
 
-        try:
-            data = self._sunbelt.query(self.kind, byId = 1, fields = fields, subfields = subfields)
-        except:
-            data = next(self._sunbelt.query(self.kinds, fields = fields, 
+        data = next(self._sunbelt.query(self.kinds, fields = fields, 
                                             subfields = subfields,
                                             orderBy = {'sun_unique_id': 'asc'}, 
                                             limit = 1))
@@ -49,6 +48,39 @@ class SunbeltReadGeneratorBase():
 
     def search(self, fields = None, subfields = None, **kwargs):
         """
+        Returns objs
+        """
+        
+        hard_limit = kwargs.pop('limit', None)
+        kwargs['limit'] = limit = min(1000, hard_limit) if hard_limit else 1000
+        kwargs['offset'] = 0
+        
+        all_results = []
+        all_results_count = 0
+        while True:
+            query = self._sunbelt.query(self.kinds, fields = fields, 
+                                           subfields = subfields,
+                                           using_pagination = True,
+                                           **kwargs)
+            results = list(query)
+
+            if any(results):
+                all_results_count += len(results)
+                print(all_results_count, end = ' loaded')
+                all_results += results
+                kwargs['offset'] += limit
+                
+                if hard_limit and all_results_count >= hard_limit:
+                    break
+            else:
+                break
+
+        return [self.model(self._sunbelt, x) for x in all_results]
+
+    
+    def search_generator(self, fields = None, subfields = None, **kwargs):
+
+        """
         Alias for query but for self.kinds
         """
         
@@ -57,9 +89,7 @@ class SunbeltReadGeneratorBase():
         for data in query:
             if data:
                 yield self.model(self._sunbelt, data)
-
-
-
+        
     def _all(self, fields = None, subfields = None, limit = None):
         """
         Alias for search but uses no search terms
