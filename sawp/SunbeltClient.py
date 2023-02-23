@@ -2,16 +2,15 @@
 
 from .base import SunbeltClientBase
 from .generators import generators
-import requests
 
 class SunbeltClient(SunbeltClientBase):
 
-    def __init__(self, username = None, password = None, server = 'local', disable_postfetching = False):
-        servers = {'local': "http://127.0.0.1:5000",
+    def __init__(self, username = None, password = None, host = 'local', disable_postfetching = False):
+        hosts = {'local': "http://127.0.0.1:5000",
                  'heroku' : 'https://sunbelt.herokuapp.com',
                  'prod' : ''}
 
-        host = servers[server]
+        host = hosts[host]
         self._authenticated = False
         self.current_user = None
         self.host = host

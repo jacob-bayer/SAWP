@@ -21,15 +21,23 @@ def print_error_msg(errors, query):
 class SunbeltClientBase:
     
 
-    def _authenticate(self, host, username = None, password = None):
-        url = host + '/auth'
+    def _authenticate(self, host = None, username = None, password = None):
+        if not host and self.host:
+            host = self.host
+            
+        auth_url = host + '/auth'
         self._session = requests.Session()
+        self._session.headers.update({'Content-Type': 'application/json'})
         if username and password:
             data = {'username': username, 'password': password}
-            response = self._session.post(url, data=data)
-        else: # use refresh token
-            data = {'refresh_token': self._refresh_token}
-            response = self._session.post(url, data=data)
+            response = self._session.post(auth_url, json = data)
+        elif self._refresh_token: # use refresh token
+            refresh_header = {'refresh_token': self._refresh_token}
+            response = self._session.post(host + '/refresh', headers=refresh_header, json = refresh_header)
+            if response.ok: log.info('TOken was refreshed.')
+        else:
+            raise Exception('Need to login with username and password in order to write.')
+        
         response.raise_for_status()
         response_json = response.json()
         self._token = response_json['access_token']
@@ -43,12 +51,13 @@ class SunbeltClientBase:
     
     def batch_add_data(self, json_data):
         if not self._authenticated:
-            raise Exception('Must authenticate before adding data')
+            self._authenticate()
         batch_data_url = self.host + '/add_batch_data'
         response = self._session.post(batch_data_url, json=json_data)
         response.raise_for_status()
         if response.status_code == 401:
-
+            self._authenticated = False
+            self.batch_add_data(json_data)
         return response
 
     # async batch add data
