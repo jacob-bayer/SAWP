@@ -27,13 +27,14 @@ class SunbeltClientBase:
             
         auth_url = host + '/auth'
         self._session = requests.Session()
-        self._session.headers.update({'Content-Type': 'application/json'})
+        self._headers = {'Content-Type': 'application/json'}
+        self._session.headers.update(self._headers)
         if username and password:
             data = {'username': username, 'password': password}
             response = self._session.post(auth_url, json = data)
         elif self._refresh_token: # use refresh token
             refresh_header = {'refresh_token': self._refresh_token}
-            response = self._session.post(host + '/refresh', headers=refresh_header, json = refresh_header)
+            response = requests.post(host + '/refresh', headers = refresh_header, json = refresh_header)
             if response.ok: log.info('TOken was refreshed.')
         else:
             raise Exception('Need to login with username and password in order to write.')
@@ -41,7 +42,8 @@ class SunbeltClientBase:
         response.raise_for_status()
         response_json = response.json()
         self._token = response_json['access_token']
-        self._session.headers.update({'Authorization': 'Bearer ' + self._token})
+        self._headers.update({'Authorization': 'Bearer ' + self._token})
+        self._session.headers.update(self._headers)
         self._refresh_token = response_json['refresh_token']
         self._authenticated = True
 
@@ -54,19 +56,22 @@ class SunbeltClientBase:
             self._authenticate()
         batch_data_url = self.host + '/add_batch_data'
         response = self._session.post(batch_data_url, json=json_data)
-        response.raise_for_status()
         if response.status_code == 401:
             self._authenticated = False
             self.batch_add_data(json_data)
+        response.raise_for_status()
         return response
 
     # async batch add data
     async def async_batch_add_data(self, json_data):
         if not self._authenticated:
-            raise Exception('Must authenticate before adding data')
+            self._authenticate()
         batch_data_url = self.host + '/add_batch_data'
         async with aiohttp.ClientSession() as session:
-            async with session.post(batch_data_url, headers=self._headers, json=json_data) as response:
+            async with session.post(batch_data_url, headers = self._headers, json=json_data) as response:
+                #if response.status_code == 401:
+                #    self._authenticated = False
+                #    await self.async_batch_add_data(json_data)
                 response.raise_for_status()
                 return await response.json()
 
