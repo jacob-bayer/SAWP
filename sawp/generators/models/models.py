@@ -24,7 +24,8 @@ class SunbeltModelBase():
 
 
     def __getattr__(self, name):
-
+        
+        #breakpoint()
         # https://stackoverflow.com/a/61413243/11477615
         if name.startswith('_') or name in ['shape','size']:
             raise AttributeError

@@ -93,6 +93,8 @@ class SunbeltClientBase:
         
         if total_count_only:
             kwargs['limit'] = 1
+            # offset ==0 is required for total_count to work
+            kwargs['offset'] = 0
         
         
         total_count = 'total_count' if kind.endswith('s') else ''
@@ -113,8 +115,8 @@ class SunbeltClientBase:
         for list_arg in list_args:
             if list_arg in kwargs:
                 kwargs[list_arg] = ['"' + '","'.join(kwargs[list_arg]) + '"']
-                
-        kwargs = {key: value for key, value in kwargs.items() if value}
+        
+        kwargs = {key: value for key, value in kwargs.items() if value or value==0}
         variables_str = ', '.join(f'{key}: "{value}"' if isinstance(value, str) else f'{key}: {str(value)}' for key, value in kwargs.items())
         variables_str = variables_str.replace("'", '')
                 
@@ -146,15 +148,19 @@ class SunbeltClientBase:
             data = response_json['data'][kind]
             if using_pagination or total_count_only:
                 total_count_result = data['total_count']
-                print('\r', 'Total', total_count_result, kind + ':', end = ' ')
+                if total_count_result:
+                    print('\r', 'Total', total_count_result, kind + ':', end = ' ')
+                else:
+                    print('\r                                  ', end = '')
                 if total_count_only:
                     yield total_count_result
                     
             result = data[kind]
-            if not len(result):
+            
+            if not result:
                 yield None
 
-            if isinstance(result, dict): # kinds is singular
+            elif isinstance(result, dict): # kinds is singular
                 yield result
             elif isinstance(result, list): # kinds is plural
                 for item in result:
@@ -168,17 +174,8 @@ class SunbeltClientBase:
               total_count_only = False, using_pagination = False, **kwargs):
         
         kind_is_plural = kind.endswith('s')
-        id_params = ['byId', 'reddit_id', 'name']
-        plural_id_params = ['byIds', 'reddit_ids', 'names']
-        plural_id_term = [x for x in plural_id_params if x in kwargs]
-        id_term_present = any(x in kwargs for x in id_params)
-        if kind_is_plural and id_term_present:
-            raise ValueError('Use plural ID argument for plural kind.')
 
-        elif not kind_is_plural and not id_term_present:
-            raise ValueError('Provide a single ID if searching for a single object.')
-        
-        
+
         query = self._generate_query_string(kind, fields, subfields, total_count_only, **kwargs)
 
         result = self._query(kind, query, total_count_only, using_pagination)
@@ -192,9 +189,10 @@ class SunbeltClientBase:
 
         total_count = next(self.query(kind, total_count_only = True, **kwargs))
 
-        kwargs['limit'] = limit = 1000
+        kwargs['limit'] = limit = 10000
         kwargs['offset'] = 0
         chunks = total_count//limit + 1
+        print(f'Getting {total_count} {kind} in {chunks} chunks of {limit} each')
         queries = []
         for i in range(chunks):
             queries += [self._generate_query_string(kind, fields, **kwargs)]

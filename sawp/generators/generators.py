@@ -52,7 +52,7 @@ class SunbeltReadGeneratorBase():
         """
         
         hard_limit = kwargs.pop('limit', None)
-        limit = 100000 #basically not active but it's ready to be used. Just make the number lower.
+        limit = 10000 #basically not active but it's ready to be used. Just make the number lower.
         kwargs['limit'] = limit = min(limit, hard_limit) if hard_limit else limit
         kwargs['offset'] = 0
 
@@ -63,6 +63,7 @@ class SunbeltReadGeneratorBase():
                                            subfields = subfields,
                                            using_pagination = True,
                                            **kwargs)
+            
             results = list(query)
             
             if any(results):
