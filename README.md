@@ -163,11 +163,11 @@ print(comment.most_recent_body)
 
 #### Sunbelt to Pandas
 
-Sunbelt uses a GraphQL API to query only the data specifically requested by the user. When a Sun object is first initalized by SAWP, it contains only bare minimum of information necessary to initialize the object unless additional information is specifically requested by the user. When an attribute is requested, a new API call is made to obtain that attribute from the database. A batch request for many attributes can be made by passing the requested attributes as arguments.
+Sunbelt uses a GraphQL API to query only the data specifically requested by the user. When a Sun object is first initalized by SAWP, it contains only bare minimum of information necessary to initialize the object unless additional information is specifically requested by the user. When an attribute is requested, a new API call is made to obtain that attribute from the database. A batch request for many attributes can be made by passing the requested attributes as a list to the `fields` argument.
 
 
 ```python
-all_comments = sunbelt.comments.all(# Requested fields can be passed as args
+all_comments = sunbelt.comments.all(fields = [
                                  'sun_post_id',
                                  'sun_comment_id',
                                  'reddit_post_id',
@@ -179,7 +179,7 @@ all_comments = sunbelt.comments.all(# Requested fields can be passed as args
                                  'created_utc',
                                  'most_recent_edited',
                                  'most_recent_gilded',
-                                 'depth')
+                                 'depth'])
 ```
 
 Sunbelt objects have a useful to_dict method, which can be used to create a pandas dataframe.
@@ -222,19 +222,7 @@ comments_df
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
