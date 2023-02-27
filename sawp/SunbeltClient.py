@@ -5,15 +5,15 @@ from .generators import generators
 
 class SunbeltClient(SunbeltClientBase):
 
-    def __init__(self, username = None, password = None, host = 'local', disable_postfetching = False):
-        hosts = {'local': "http://127.0.0.1:5000",
-                 'heroku' : 'https://sunbelt.herokuapp.com',
-                 'prod' : ''}
+    def __init__(self, username = None, password = None, dev = False, disable_postfetching = False):
 
-        host = hosts[host]
+        if dev:
+            self.host = "http://127.0.0.1:5000"
+        else:
+            self.host = 'https://sunbelt.herokuapp.com'
+            
         self._authenticated = False
         self.current_user = None
-        self.host = host
         self.graphql_url = self.host + '/graphql'
 
         if username and password:
@@ -36,33 +36,6 @@ class SunbeltClient(SunbeltClientBase):
                                 'subreddits': self.subreddits,
                                 'postdetails': self.post_details,
                                 'commentdetails': self.comment_details}
-
-    # This is if args need to be added to the generator which shouldn't happen anymore
-    # Post.comments, for example are now going to be loaded correctly from graphql using the query subfields arg
-
-    # @property
-    # def posts(self):
-    #     return generators.PostGenerator(self)
-    
-    # @property
-    # def comments(self):
-    #     return generators.CommentGenerator(self)
-
-    # @property
-    # def accounts(self):
-    #     return generators.AccountGenerator(self)
-
-    # @property
-    # def subreddits(self):
-    #     return generators.SubredditGenerator(self)
-
-    # @property
-    # def post_details(self):
-    #     return generators.PostDetailGenerator(self)
-
-    # @property
-    # def comment_details(self):
-    #     return generators.CommentDetailGenerator(self)
 
 
     def search(self, kind, limit = None, fields = [], **kwargs):

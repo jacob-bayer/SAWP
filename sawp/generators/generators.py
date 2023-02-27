@@ -68,7 +68,7 @@ class SunbeltReadGeneratorBase():
             
             if any(results):
                 all_results_count += len(results)
-                print(all_results_count, end = ' loaded')
+                print('\r', all_results_count,' loaded', end = '')
                 all_results += results
                 kwargs['offset'] += limit
                 

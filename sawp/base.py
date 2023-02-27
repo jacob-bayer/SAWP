@@ -149,9 +149,7 @@ class SunbeltClientBase:
             if using_pagination or total_count_only:
                 total_count_result = data['total_count']
                 if total_count_result:
-                    print('\r', 'Total', total_count_result, kind + ':', end = ' ')
-                else:
-                    print('\r                                  ', end = '')
+                    print('\r', 'Total', total_count_result, kind + ':')#, end = ' ')
                 if total_count_only:
                     yield total_count_result
                     
