@@ -354,42 +354,6 @@ comments_df
       <td>...</td>
     </tr>
     <tr>
-      <th>655</th>
-      <td>comment</td>
-      <td>648</td>
-      <td>1.674667e+09</td>
-      <td>0</td>
-      <td>What a fucking asshole.</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>t1_j5udej5</td>
-      <td>None</td>
-      <td>t3_10kzjx3</td>
-      <td>648</td>
-      <td>15</td>
-      <td>648</td>
-    </tr>
-    <tr>
-      <th>656</th>
-      <td>comment</td>
-      <td>649</td>
-      <td>1.674667e+09</td>
-      <td>0</td>
-      <td>Yep, like a cancer.</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>t1_j5uf640</td>
-      <td>None</td>
-      <td>t3_10kzjx3</td>
-      <td>649</td>
-      <td>15</td>
-      <td>649</td>
-    </tr>
-    <tr>
       <th>657</th>
       <td>comment</td>
       <td>650</td>
